@@ -235,7 +235,6 @@ export default class SpinalAttributeService {
     // console.log("service type", type);
 
     return groupManagerService.getGroupContexts(type).then((contexts) => {
-      console.log("coucou",type);
       const promises = contexts.map(async context => {
         context["category"] = await this.getCategory(context.id);
         return context;

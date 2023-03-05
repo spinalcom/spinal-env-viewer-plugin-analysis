@@ -158,6 +158,7 @@ with this file. If not, see
                  @click="PassToNextStep">Next
       </md-button>
       <md-button v-if="stepper.active === this.STEPPERS_DATA.recap"
+                 :disabled="isSaveButtonDisabled()"
                  class="md-primary"
                  @click="closeDialog(true)">Save</md-button>
     </md-dialog-actions>
@@ -225,9 +226,68 @@ export default {
     },
 
     async removed(res) {
-      console.log(this.algorithmParameters)
       if (res.closeResult){
-       
+        /*console.log({
+          entity: this.selectedNode,
+          Analytic_name: this.analyticName,
+          algorithm: this.algorithm,
+          resultType: this.resultType,
+          resultName: this.resultName,
+          intervalTime: this.intervalTime,
+          algorithmParameters: this.algorithmParameters,
+          trackingMethod: this.trackingMethod,
+          filterValue: this.filterValue,
+          followedEntity: this.followedEntity,
+        })*/
+
+
+        // there must be a better way to get the context id...
+        const contextId = Object.keys(this.selectedNode.contextIds.get())[0]
+
+        //create analytic Node
+        const IAnalytic = {
+            name: this.analyticName,
+            description :""
+        };
+        const analyticInfo = await spinalAnalyticService.addAnalytic(IAnalytic,contextId,this.selectedNode.id.get());
+        
+        
+        //create trackingMethod Node
+        const ITrackingMethod = {
+            name: "TrackingMethod",
+            trackMethod: this.trackingMethod,
+            filterValue: this.filterValue
+        }
+
+        const trackingMethodInfo = await spinalAnalyticService.addInputTrackingMethod(ITrackingMethod,contextId,analyticInfo.id.get());
+        
+        //create followedEntity Node
+        const followedEntityInfo = await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,
+        analyticInfo.id.get(),this.followedEntity);
+
+
+        //create config Node
+        const IConfig  = {
+            algorithm: this.algorithm,
+            resultType: this.resultType,
+            resultName:this.resultName,
+            intervalTime: this.intervalTime,
+
+        };
+
+        const formattedAlgorithmParams = [];
+        const doc = this.CONST_ALGO_DOC[this.algorithm];
+        for (let i = 0; i < this.algorithmParameters.length; i++) {
+          const paramValue = this.algorithmParameters[i];
+          formattedAlgorithmParams.push({
+            name: doc[i].name,
+            value: doc[i].type ==="number" ? +paramValue : paramValue,
+            type : doc[i].type
+          });
+        }
+        
+        const configInfo = await spinalAnalyticService.addConfig(IConfig,formattedAlgorithmParams,analyticInfo.id.get(),contextId);
+
       }
       
       this.showDialog = false;
@@ -246,7 +306,7 @@ export default {
     },
 
     closeSelectGroupEntityDialog(selectedGroup){
-      console.log("fermeture",selectedGroup);
+      this.followedEntity = selectedGroup;
       this.showSelectGroupEntityDialog = false;
     },
 
@@ -279,6 +339,14 @@ export default {
           break;
       }
     },
+
+    isSaveButtonDisabled(){
+      if (this.analyticName === "" || this.algorithm === "" ||
+           this.resultType === "" || this.resultName === "" || this.intervalTime === null || this.trackingMethod === "" || this.filterValue === "" || this.followedEntity === ""){
+        return true;
+      }
+      return false;
+    }
   },
   computed : {
     algo_doc () {
@@ -288,6 +356,10 @@ export default {
       if (this.selectedNode === undefined) return false;
       return this.selectedNode.entityType.get().includes("Group");
     },
+
+    
+
+
   }
 };
 </script>
