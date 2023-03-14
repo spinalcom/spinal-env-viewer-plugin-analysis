@@ -71,16 +71,30 @@ with this file. If not, see
               <md-input v-model="filterValue"></md-input>
             </md-field>
 
-            <md-button v-if="isGroupEntitySelected" @click="showSelectGroupEntityDialog = true">Follow group entity</md-button>
-            <md-button v-else @click="showSelectSpatialEntityDialog = true">Follow spatial entity</md-button>
+            <div>
+              <md-button v-if="isGroupEntitySelected" @click="showSelectGroupEntityDialog = true">
+                Follow entity
+                <md-icon v-if="followedEntity==''">add</md-icon>
+                <md-icon v-else>done</md-icon>
+              </md-button>
+              <md-button v-else @click="showSelectSpatialEntityDialog = true">
+                Follow entity
+                <md-icon v-if="followedEntity==''">add</md-icon>
+                <md-icon v-else>done</md-icon>
+              </md-button>
             
+            </div>
             
-            <test-dialog :visible="showSelectSpatialEntityDialog" @closeSelection="closeSelectSpatialEntityDialog"></test-dialog>
-            <!--<test-dialog :visible="showSelectGroupEntityDialog" @closeSelection="closeSelectGroupEntityDialog"></test-dialog> -->
-            <link-to-entity v-if="this.entityType"
+            <link-to-entity v-if="this.entityType && this.entityType.includes('Group')"
                             :visible="showSelectGroupEntityDialog" 
                             :entityType="entityType"
                             @closeSelection="closeSelectGroupEntityDialog"
+                            />
+
+            <link-to-spatial-entity v-else
+                            :visible="showSelectSpatialEntityDialog" 
+                            :entityType="entityType"
+                            @closeSelection="closeSelectSpatialEntityDialog"
                             />
           </md-content>
 
@@ -173,13 +187,15 @@ import { spinalAnalyticService , ENTITY_TYPES ,
 
 import testDialogVue from './components/testDialog.vue';
 import linkToEntityVue from './components/linkToEntity.vue';
+import linkToSpatialEntityVue from './components/linkToSpatialEntity.vue';
 
 export default {
   name: "createAnalyticDialog",
   props: ["onFinised"],
   components: {
     "test-dialog": testDialogVue,
-    "link-to-entity": linkToEntityVue
+    "link-to-entity": linkToEntityVue,
+    "link-to-spatial-entity": linkToSpatialEntityVue
   },
   data() {  
     this.CONST_ALGORITHMS = ALGORITHMS;
@@ -301,11 +317,13 @@ export default {
       }
     },
 
-    closeSelectSpatialEntityDialog () {
+    closeSelectSpatialEntityDialog (selectedEntity) {
+      this.followedEntity = selectedEntity;
       this.showSelectSpatialEntityDialog = false;
     },
 
     closeSelectGroupEntityDialog(selectedGroup){
+      console.log("selected Entity :", selectedGroup);
       this.followedEntity = selectedGroup;
       this.showSelectGroupEntityDialog = false;
     },

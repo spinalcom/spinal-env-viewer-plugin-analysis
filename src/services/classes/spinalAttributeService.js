@@ -212,28 +212,6 @@ export default class SpinalAttributeService {
 
 
   getAllGroupContext(type) {
-    // return Promise.all([SpinalGraphService.getContextWithType(
-    //     groupService.constants.ROOMS_GROUP_CONTEXT),
-    //   SpinalGraphService.getContextWithType(
-    //     groupService.constants.EQUIPMENTS_GROUP_CONTEXT),
-    //   SpinalGraphService.getContextWithType(
-    //     groupService.constants.ENDPOINTS_GROUP_CONTEXT)
-    // ]).then(values => {
-    //   let contexts = values.flat();
-
-    //   let promises = contexts.map(async context => {
-    //     let res = context.info.get();
-    //     res["category"] = await this.getCategory(res.id, res
-    //       .type);
-    //     return res;
-    //   })
-
-    //   return Promise.all(promises);
-
-    // })
-
-    // console.log("service type", type);
-
     return groupManagerService.getGroupContexts(type).then((contexts) => {
       const promises = contexts.map(async context => {
         context["category"] = await this.getCategory(context.id);
@@ -246,23 +224,6 @@ export default class SpinalAttributeService {
   }
 
   async getCategory(contextId) {
-
-    // let relationName = groupService.constants
-    //   .CONTEXT_TO_CATEGORY_RELATION;
-
-    // return SpinalGraphService.getChildren(contextId, [relationName]).then(
-    //   children => {
-    //     let promises = children.map(async child => {
-    //       let info = child.get();
-    //       info["groups"] = await this.getGroup(child.id, child
-    //         .type);
-    //       return info;
-    //     })
-
-    //     return Promise.all(promises);
-
-    //   })
-
     const categories = await groupManagerService.getCategories(contextId)
 
     const promises = categories.map(async category => {
@@ -277,21 +238,18 @@ export default class SpinalAttributeService {
 
   async getGroup(categoryId) {
 
-    // let relationName = groupService.constants.CATEGORY_TO_GROUP_RELATION;
-
-
-    // return SpinalGraphService.getChildren(categoryId, [relationName])
-    //   .then(
-    //     children => {
-    //       return children.map(el => el.get());
-    //     })
-
     const groups = await groupManagerService.getGroups(categoryId);
 
     return groups.map(el => el.get());
 
   }
 
+  async getAllSpatialBuildings(){
+    const spatialContext = SpinalGraphService.getContext("spatial");
+    const buildings = await SpinalGraphService.findInContextByType(spatialContext.info.id.get(),spatialContext.info.id.get(),"geographicBuilding");
+    //return buildings.map(el => SpinalGraphService.getInfo(el.info.id.get()));
+    return buildings;
+  }
   linkItem(contextId, parentId, itemId) {
     // groupService.linkElementToGroup(parentId, itemId, contextId)
     return groupManagerService.linkElementToGroup(contextId, parentId,

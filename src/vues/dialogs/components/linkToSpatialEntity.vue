@@ -25,40 +25,37 @@ with this file. If not, see
 <template>
    <md-dialog
       class="mdDialogContainer"
-      :md-active.sync="showDialog"
+      :md-active.sync="visible"
       @md-closed="closeDialog(false)"
    >
-      <md-dialog-title class="dialogTitle">Link To Group</md-dialog-title>
+      <md-dialog-title class="dialogTitle">Link To {{this.entityType}}</md-dialog-title>
       <md-dialog-content class="content">
 
-         <div class="section">
+         <div class="section" >
             <link-template
-               :title="'Contexts'"
+               :title="'Buildings'"
                :data="data"
                :itemSelected="contextSelected"
-               @create="createContext"
                @select="selectContext"
             ></link-template>
          </div>
 
-         <div class="section">
+         <div class="section" v-if="this.entityType != 'geographicBuilding'">
             <link-template
-               :title="'Categories'"
+               :title="'Floors'"
                :data="categories"
                :itemSelected="categorySelected"
-               @create="createCategory"
                @select="selectCategory"
                :disableBtn="!contextSelected"
             ></link-template>
 
          </div>
 
-         <div class="section">
+         <div class="section" v-if="this.entityType == 'geographicRoom'">
             <link-template
-               :title="'Groups'"
+               :title="'Rooms'"
                :data="groups"
                :itemSelected="groupSelected"
-               @create="createGroup"
                @select="selectGroup"
                :disableBtn="!categorySelected"
             ></link-template>
@@ -80,11 +77,11 @@ with this file. If not, see
 </template>
 
 <script>
-//import attributeService from "../../services/index";
+import attributeService from "../../../services/index";
+
 
 import { spinalPanelManagerService } from "spinal-env-viewer-panel-manager-service";
 import { SpinalGraphService } from "spinal-env-viewer-graph-service";
-import EventBus from "spinal-env-viewer-room-manager/js/event";
 
 import linkToGroupTemplate from "./linkerTemplate.vue";
 
@@ -93,7 +90,7 @@ export default {
    components: {
       "link-template": linkToGroupTemplate,
    },
-   props: ["onFinised"],
+   props: ["visible","entityType"],
    data() {
       return {
          showDialog: true,
@@ -106,152 +103,74 @@ export default {
          items: [],
          type: undefined,
          callback: undefined,
+         spatialContextId : undefined,
       };
    },
 
    mounted() {
-      EventBus.$on("itemCreated", (id) => {
-         this.getAllData();
-      });
+      this.type = this.entityType+"Context"; // normalement pas besoin
+      this.getAllData();
+      this.spatialContextId = SpinalGraphService.getContext("spatial").info.id.get();
+   
    },
 
    methods: {
       opened(option) {
-         this.items = option.itemSelected;
-         this.type = option.type;
-         this.callback = option.callback;
 
-         this.getAllData();
-      },
-
-      removed(option) {
-         if (option) {
-            this.items.forEach((el) => {
-               attributeService.linkItem(
-                  this.contextSelected,
-                  this.groupSelected,
-                  el.id
-               );
-            });
-
-            if (typeof this.callback !== "undefined") {
-               const context = this.data.find(
-                  (el) => el.id === this.contextSelected
-               );
-               const category = this.categories.find(
-                  (el) => el.id === this.categorySelected
-               );
-               const group = this.groups.find(
-                  (el) => el.id === this.groupSelected
-               );
-
-               this.callback(context, category, group);
-            }
-         }
-         this.showDialog = false;
       },
 
       closeDialog(closeResult) {
-         if (typeof this.onFinised === "function") {
-            this.onFinised(closeResult);
+         switch(this.entityType) {
+            case "geographicBuilding":
+               this.$emit("closeSelection",this.contextSelected)
+            case "geographicFloor":
+               this.$emit("closeSelection",this.categorySelected)
+            case "geographicRoom":
+               this.$emit("closeSelection",this.groupSelected)
          }
+         
       },
 
       getAllData() {
-         attributeService.getAllGroupContext(this.type).then((res) => {
+         attributeService.getAllSpatialBuildings().then((res) => {
             this.data = res;
-            this.updateCategory();
-            this.updateGroups();
+            //this.updateCategory();
+            //this.updateGroups();
          });
       },
-      // getCategories() {
-      //   this.categorySelected = undefined;
-
-      //   if (this.contextSelected) {
-      //     let val = this.data.find(el => el.id === this.contextSelected);
-      //     if (val) return val.category;
-      //   }
-      //   return [];
-      // },
-      getGroups() {
-         this.groupSelected = undefined;
-
-         if (this.contextSelected && this.categorySelected) {
-            let context = this.data.find(
-               (el) => el.id === this.contextSelected
-            );
-            if (context) {
-               let category = context.category.find(
-                  (el) => el.id == this.categorySelected
-               );
-
-               if (category) return category.groups;
-            }
-         }
-         return [];
-      },
+      
 
       disabled() {
-         return !(
-            this.contextSelected &&
-            this.categorySelected &&
-            this.groupSelected
-         );
-      },
-
-      createContext() {
-         spinalPanelManagerService.openPanel("createGroupContextDialog", {
-            title: "Create a Grouping Context",
-            typePreselected: this.type,
-            callback: (id) => (this.contextSelected = id),
-         });
-      },
-
-      createCategory() {
-         spinalPanelManagerService.openPanel("createCategoryDialog", {
-            title: "add Category",
-            contextId: this.contextSelected,
-            selectedNode: SpinalGraphService.getInfo(this.contextSelected),
-            callback: (id) => (this.categorySelected = id),
-         });
-      },
-
-      createGroup() {
-         spinalPanelManagerService.openPanel("createGroupDialog", {
-            title: "add Group",
-            contextId: this.contextSelected,
-            selectedNode: SpinalGraphService.getInfo(this.categorySelected),
-            callback: (id) => (this.groupSelected = id),
-         });
+         switch(this.entityType) {
+            case "geographicBuilding":
+               return !this.contextSelected;
+            case "geographicFloor":
+               return !this.categorySelected;
+            case "geographicRoom":
+               return !this.groupSelected;
+         }
       },
 
       //////////////////////////////////////////////////////////////////
       // Modify
       //////////////////////////////////////////////////////////////////
-
       updateCategory() {
          // this.categorySelected = undefined;
          this.categories = [];
          if (this.contextSelected) {
-            let val = this.data.find((el) => el.id === this.contextSelected);
-            if (val) this.categories = val.category;
+            SpinalGraphService.findInContextByType(this.contextSelected, this.spatialContextId,"geographicFloor").then((res) => {
+               this.categories = res;
+            });
          }
       },
 
       updateGroups() {
          // this.groupSelected = undefined;
          this.groups = [];
-         if (this.contextSelected && this.categorySelected) {
-            let context = this.data.find(
-               (el) => el.id === this.contextSelected
-            );
-            if (context) {
-               let category = context.category.find(
-                  (el) => el.id == this.categorySelected
-               );
-
-               if (category) this.groups = category.groups;
-            }
+         if(this.categorySelected) {
+            SpinalGraphService.findInContextByType(this.categorySelected, this.spatialContextId,"geographicRoom").then((res) => {
+               this.groups = res;
+            });
          }
       },
 
@@ -287,6 +206,8 @@ export default {
 
 <style scoped>
 .mdDialogContainer {
+   transform: translate(-50%,-50%) scale(1) !important;
+   z-index: 1000 !important;
    width: 100%;
    height: 600px;
 }

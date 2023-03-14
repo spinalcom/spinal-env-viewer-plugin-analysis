@@ -110,15 +110,14 @@ export default {
    },
 
    mounted() {
-      console.log("recieved type :", this.entityType);
       this.type = this.entityType+"Context";
       this.getAllData();
+   
    },
 
    methods: {
       opened(option) {
-         
-         
+
       },
 
       closeDialog(closeResult) {
@@ -127,7 +126,6 @@ export default {
 
       getAllData() {
          attributeService.getAllGroupContext(this.type).then((res) => {
-            console.log("res", res);
             this.data = res;
             this.updateCategory();
             this.updateGroups();
