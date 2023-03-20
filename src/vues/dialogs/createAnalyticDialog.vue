@@ -42,31 +42,27 @@
               <p> If the target entity type is Room and the followed entity is a group of rooms, 
                   the analytic will be applied to all the rooms of the group.</p>
               
-              <p > Currently selected node : {{!followedEntity ? 'None' : followedEntity }} </p>
+              <p > <strong> Currently selected node  </strong>: {{!followedEntity ? 'None' : followedEntityName }} </p>
               <md-button
-                v-if="isGroupEntitySelected"
                 @click="showSelectGroupEntityDialog = true"
               >
-                Follow entity
-                <md-icon v-if="!followedEntity ">add</md-icon>
-                <md-icon v-else>done</md-icon>
+                Follow group entity
               </md-button>
-              <md-button v-else @click="showSelectSpatialEntityDialog = true">
-                Follow entity
-                <md-icon v-if="!followedEntity">add</md-icon>
-                <md-icon v-else>done</md-icon>
+
+              <md-button v-if="!isGroupEntitySelected" @click="showSelectSpatialEntityDialog = true">
+                Follow spatial entity
               </md-button>
             </div>
 
             <link-to-entity
-              v-if="this.entityType && this.entityType.includes('Group')"
+              v-if="this.entityType"
               :visible="showSelectGroupEntityDialog"
-              :entityType="entityType"
+              :entityType="entityType.includes('Group') ? entityType : entityType+'Group'"
               @closeSelection="closeSelectGroupEntityDialog"
             />
 
             <link-to-spatial-entity
-              v-else
+              v-if="!isGroupEntitySelected"
               :visible="showSelectSpatialEntityDialog"
               :entityType="entityType"
               @closeSelection="closeSelectSpatialEntityDialog"
@@ -444,7 +440,7 @@ export default {
       if (!this.followedEntity ) return '';
       const info = SpinalGraphService.getInfo(this.followedEntity);
       console.log(info);
-      return info.name.get();
+      return `${info.name.get()} | Type : ${info.type.get()} | Node id : ${info.id.get()}`;
     },
 
     summaryList() {

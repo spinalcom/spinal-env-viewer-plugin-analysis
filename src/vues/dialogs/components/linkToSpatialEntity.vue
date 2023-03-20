@@ -119,10 +119,14 @@ export default {
         switch (this.entityType) {
           case 'geographicBuilding':
             this.$emit('closeSelection', this.buildingSelected);
+            break;
           case 'geographicFloor':
             this.$emit('closeSelection', this.floorSelected);
+            break;
           case 'geographicRoom':
             this.$emit('closeSelection', this.roomSelected);
+            break;
+            
         }
       }
     },

@@ -93,7 +93,6 @@ export default {
    methods: {
 
       closeDialog(closeResult) {
-         console.log("I close with closeResult = ", closeResult);
          if(!closeResult) {
             this.$emit("closeSelection", undefined);
          }
