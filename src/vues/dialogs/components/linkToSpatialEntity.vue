@@ -23,210 +23,216 @@ with this file. If not, see
 -->
 
 <template>
-   <md-dialog
-      class="mdDialogContainer"
-      :md-active.sync="visible"
-      @md-closed="closeDialog(false)"
-   >
-      <md-dialog-title class="dialogTitle">Link To {{this.entityType}}</md-dialog-title>
-      <md-dialog-content class="content">
+  <md-dialog
+    class="mdDialogContainer"
+    :md-active.sync="visible"
+  >
+    <md-dialog-title class="dialogTitle"
+      >Link to {{ this.entityType }}</md-dialog-title
+    >
+    <md-dialog-content class="content">
+      <div class="section">
+        <link-template
+          :title="'Buildings'"
+          :data="data"
+          :itemSelected="buildingSelected"
+          @select="selectContext"
+        ></link-template>
+      </div>
 
-         <div class="section" >
-            <link-template
-               :title="'Buildings'"
-               :data="data"
-               :itemSelected="contextSelected"
-               @select="selectContext"
-            ></link-template>
-         </div>
+      <div class="section" v-if="this.entityType != 'geographicBuilding'">
+        <link-template
+          :title="'Floors'"
+          :data="floors"
+          :itemSelected="floorSelected"
+          @select="selectCategory"
+          :disableBtn="!buildingSelected"
+        ></link-template>
+      </div>
 
-         <div class="section" v-if="this.entityType != 'geographicBuilding'">
-            <link-template
-               :title="'Floors'"
-               :data="categories"
-               :itemSelected="categorySelected"
-               @select="selectCategory"
-               :disableBtn="!contextSelected"
-            ></link-template>
-
-         </div>
-
-         <div class="section" v-if="this.entityType == 'geographicRoom'">
-            <link-template
-               :title="'Rooms'"
-               :data="groups"
-               :itemSelected="groupSelected"
-               @select="selectGroup"
-               :disableBtn="!categorySelected"
-            ></link-template>
-         </div>
-      </md-dialog-content>
-      <md-dialog-actions>
-         <md-button
-            class="md-primary"
-            @click="closeDialog(false)"
-         >Close</md-button>
-         <md-button
-            class="md-primary"
-            :disabled="disabled()"
-            @click="closeDialog(true)"
-         >Save</md-button>
-      </md-dialog-actions>
-   </md-dialog>
-
+      <div class="section" v-if="this.entityType == 'geographicRoom'">
+        <link-template
+          :title="'Rooms'"
+          :data="rooms"
+          :itemSelected="roomSelected"
+          @select="selectGroup"
+          :disableBtn="!floorSelected"
+        ></link-template>
+      </div>
+    </md-dialog-content>
+    <md-dialog-actions>
+      <md-button class="md-primary" @click="closeDialog(false)"
+        >Close</md-button
+      >
+      <md-button
+        class="md-primary"
+        :disabled="disabled()"
+        @click="closeDialog(true)"
+        >Save</md-button
+      >
+    </md-dialog-actions>
+  </md-dialog>
 </template>
 
 <script>
-import attributeService from "../../../services/index";
+import attributeService from '../../../services/index';
 
+import { spinalPanelManagerService } from 'spinal-env-viewer-panel-manager-service';
+import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 
-import { spinalPanelManagerService } from "spinal-env-viewer-panel-manager-service";
-import { SpinalGraphService } from "spinal-env-viewer-graph-service";
-
-import linkToGroupTemplate from "./linkerTemplate.vue";
+import linkToGroupTemplate from './linkerTemplate.vue';
 
 export default {
-   name: "dialogComponent",
-   components: {
-      "link-template": linkToGroupTemplate,
-   },
-   props: ["visible","entityType"],
-   data() {
-      return {
-         showDialog: true,
-         data: [],
-         groups: [],
-         categories: [],
-         contextSelected: undefined,
-         categorySelected: undefined,
-         groupSelected: undefined,
-         items: [],
-         type: undefined,
-         callback: undefined,
-         spatialContextId : undefined,
-      };
-   },
+  name: 'spatialSelectComponent',
+  components: {
+    'link-template': linkToGroupTemplate,
+  },
+  props: ['visible', 'entityType'],
+  data() {
+    return {
+      showDialog: true,
+      data: [],
+      rooms: [],
+      floors: [],
+      buildingSelected: undefined,
+      floorSelected: undefined,
+      roomSelected: undefined,
+      items: [],
+      spatialContextId: undefined,
+    };
+  },
 
-   mounted() {
-      this.type = this.entityType+"Context"; // normalement pas besoin
-      this.getAllData();
-      this.spatialContextId = SpinalGraphService.getContext("spatial").info.id.get();
-   
-   },
+  mounted() {
+    console.log('mounted');
+    this.getAllData();
+    this.spatialContextId =
+      SpinalGraphService.getContext('spatial').info.id.get();
+  },
 
-   methods: {
-      opened(option) {
+  methods: {
+    opened(option) {},
 
-      },
+    closeDialog(closeResult) {
+      if (!closeResult) {
+        this.$emit('closeSelection', undefined);
+      } else {
+        switch (this.entityType) {
+          case 'geographicBuilding':
+            this.$emit('closeSelection', this.buildingSelected);
+          case 'geographicFloor':
+            this.$emit('closeSelection', this.floorSelected);
+          case 'geographicRoom':
+            this.$emit('closeSelection', this.roomSelected);
+        }
+      }
+    },
 
-      closeDialog(closeResult) {
-         switch(this.entityType) {
-            case "geographicBuilding":
-               this.$emit("closeSelection",this.contextSelected)
-            case "geographicFloor":
-               this.$emit("closeSelection",this.categorySelected)
-            case "geographicRoom":
-               this.$emit("closeSelection",this.groupSelected)
-         }
-         
-      },
+    getAllData() {
+      attributeService.getAllSpatialBuildings().then((res) => {
+        this.data = res;
+        //this.updateCategory();
+        //this.updateGroups();
+      });
+    },
 
-      getAllData() {
-         attributeService.getAllSpatialBuildings().then((res) => {
-            this.data = res;
-            //this.updateCategory();
-            //this.updateGroups();
-         });
-      },
-      
+    disabled() {
+      switch (this.entityType) {
+        case 'geographicBuilding':
+          return !this.buildingSelected;
+        case 'geographicFloor':
+          return !this.floorSelected;
+        case 'geographicRoom':
+          return !this.roomSelected;
+      }
+    },
 
-      disabled() {
-         switch(this.entityType) {
-            case "geographicBuilding":
-               return !this.contextSelected;
-            case "geographicFloor":
-               return !this.categorySelected;
-            case "geographicRoom":
-               return !this.groupSelected;
-         }
-      },
+    //////////////////////////////////////////////////////////////////
+    // Modify
+    //////////////////////////////////////////////////////////////////
+    updateCategory() {
+      // this.floorSelected = undefined;
+      this.floors = [];
+      if (this.buildingSelected) {
+        SpinalGraphService.findInContextByType(
+          this.buildingSelected,
+          this.spatialContextId,
+          'geographicFloor'
+        ).then((res) => {
+          this.floors = res;
+        });
+      }
+    },
 
-      //////////////////////////////////////////////////////////////////
-      // Modify
-      //////////////////////////////////////////////////////////////////
-      updateCategory() {
-         // this.categorySelected = undefined;
-         this.categories = [];
-         if (this.contextSelected) {
-            SpinalGraphService.findInContextByType(this.contextSelected, this.spatialContextId,"geographicFloor").then((res) => {
-               this.categories = res;
-            });
-         }
-      },
+    updateGroups() {
+      // this.roomSelected = undefined;
+      this.rooms = [];
+      if (this.floorSelected) {
+        SpinalGraphService.findInContextByType(
+          this.floorSelected,
+          this.spatialContextId,
+          'geographicRoom'
+        ).then((res) => {
+          this.rooms = res;
+        });
+      }
+    },
 
-      updateGroups() {
-         // this.groupSelected = undefined;
-         this.groups = [];
-         if(this.categorySelected) {
-            SpinalGraphService.findInContextByType(this.categorySelected, this.spatialContextId,"geographicRoom").then((res) => {
-               this.groups = res;
-            });
-         }
-      },
+    selectContext(id) {
+      console.log('select building ', id);
+      this.buildingSelected = id;
+    },
 
-      selectContext(id) {
-         this.contextSelected = id;
-      },
+    selectCategory(id) {
+      console.log('select floor ', id);
+      this.floorSelected = id;
+    },
 
-      selectCategory(id) {
-         this.categorySelected = id;
-      },
+    selectGroup(id) {
+      console.log('select room ', id);
+      this.roomSelected = id;
+    },
+  },
+  watch: {
+    buildingSelected() {
+      this.floorSelected = undefined;
+      this.roomSelected = undefined;
 
-      selectGroup(id) {
-         this.groupSelected = id;
-      },
-   },
-   watch: {
-      contextSelected() {
-         this.categorySelected = undefined;
-         this.groupSelected = undefined;
+      this.updateCategory();
+      this.updateGroups();
+    },
 
-         this.updateCategory();
-         this.updateGroups();
-      },
+    floorSelected() {
+      this.roomSelected = undefined;
 
-      categorySelected() {
-         this.groupSelected = undefined;
-
-         this.updateGroups();
-      },
-   },
+      this.updateGroups();
+    },
+  },
 };
 </script>
 
 <style scoped>
 .mdDialogContainer {
-   transform: translate(-50%,-50%) scale(1) !important;
-   z-index: 1000 !important;
-   width: 100%;
-   height: 600px;
+  transform: translate(-50%, -50%) scale(1) !important;
+  z-index: 1000 !important;
+  width: 100%;
+  height: 600px;
 }
 
 .mdDialogContainer .dialogTitle {
-   text-align: center;
+  text-align: center;
 }
 
 .mdDialogContainer .content {
-   display: flex;
-   justify-content: space-between;
-   align-items: stretch;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
 }
 
 .mdDialogContainer .content .section {
-   width: 30%;
-   border: 1px solid grey;
-   border-radius: 4% 4% 0 0;
-   padding: 15px;
+  flex: 1;
+  border: 1px solid grey;
+  border-radius: 4% 4% 0 0;
+  padding: 15px;
 }
 
 /* .mdIcon {
@@ -237,7 +243,7 @@ export default {
 
 <style>
 .mdDialogContainer .md-dialog-container {
-   max-width: 100%;
-   max-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 </style>

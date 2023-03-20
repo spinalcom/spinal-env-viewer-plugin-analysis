@@ -1,230 +1,269 @@
-<!--
-Copyright 2020 SpinalCom - www.spinalcom.com
-
-This file is part of SpinalCore.
-
-Please read all of the following terms and conditions
-of the Free Software license Agreement ("Agreement")
-carefully.
-
-This Agreement is a legally binding contract between
-the Licensee (as defined below) and SpinalCom that
-sets forth the terms and conditions that govern your
-use of the Program. By installing and/or using the
-Program, you agree to abide by all the terms and
-conditions stated or referenced herein.
-
-If you do not agree to abide by these terms and
-conditions, do not demonstrate your acceptance and do
-not install or use the Program.
-You should have received a copy of the license along
-with this file. If not, see
-<http://resources.spinalcom.com/licenses.pdf>.
--->
-
 <template>
-  <md-dialog :md-active.sync="showDialog"
-             @md-closed="closeDialog(false)"
-             class="mdDialog">
-    <md-dialog-title class="mdDialogTitle">Create Analytic
-    </md-dialog-title>
+  <md-dialog
+    :md-active.sync="showDialog"
+    @md-closed="closeDialog(false)"
+    class="mdDialog"
+  >
+    <md-dialog-title class="mdDialogTitle"> Create Analytic </md-dialog-title>
 
     <md-dialog-content class="mdDialogContainer">
-
-      <md-steppers :md-active-step.sync="stepper.active"
-                   @md-changed="changeStep"
-                   md-linear>
-
-        <md-step class="mdStep"
-                 :id="STEPPERS_DATA.analytic"
-                 md-label="Analytic"
-                 :md-done.sync="stepper.first">
+      <md-steppers
+        :md-active-step.sync="stepper.active"
+        @md-changed="changeStep"
+        md-linear
+      >
+        <!-- Analytic name -->
+        <md-step
+          class="mdStep"
+          :id="STEPPERS_DATA.analytic"
+          md-label="Analytic"
+          :md-done.sync="stepper.first"
+        >
           <md-content class="contents">
-            <md-field>
+            <md-field class="fixed-size-field">
               <label>Analytic name</label>
               <md-input v-model="analyticName"></md-input>
             </md-field>
           </md-content>
-
         </md-step>
 
-        <!-- INPUTS -->
-        <md-step class="mdStep"
-                 :id="STEPPERS_DATA.inputs"
-                 md-label="Inputs"
-                 :md-done.sync="stepper.second">
+        <!-- Followed entity -->
+        <md-step
+          class="mdStep"
+          :id="STEPPERS_DATA.followedEntity"
+          md-label="Followed entity"
+          :md-done.sync="stepper.second"
+        >
           <md-content class="contents md-scrollbar">
-
-            <md-field>
-                <label>Tracking Method</label>
-                <md-select v-model="trackingMethod">
-                  <md-option
-                    v-for="data of CONST_TRACK_METHOD"
-                    :key="data"
-                    :value="data"
-                    >{{ data }}</md-option
-                  >
-                </md-select>
-            </md-field>
-            <md-field v-if="trackingMethod!=''">
-              <label>Filter Value</label>
-              <md-input v-model="filterValue"></md-input>
-            </md-field>
-
             <div>
-              <md-button v-if="isGroupEntitySelected" @click="showSelectGroupEntityDialog = true">
+              <p> The followed entity is the source that is providing the inputs.</p>
+              <p> For exemple, if the target entity type is Room and the followed entity is a room, 
+                  the analytic will be applied to that specific room.</p>
+              <p> If the target entity type is Room and the followed entity is a group of rooms, 
+                  the analytic will be applied to all the rooms of the group.</p>
+              
+              <p > Currently selected node : {{!followedEntity ? 'None' : followedEntity }} </p>
+              <md-button
+                v-if="isGroupEntitySelected"
+                @click="showSelectGroupEntityDialog = true"
+              >
                 Follow entity
-                <md-icon v-if="followedEntity==''">add</md-icon>
+                <md-icon v-if="!followedEntity ">add</md-icon>
                 <md-icon v-else>done</md-icon>
               </md-button>
               <md-button v-else @click="showSelectSpatialEntityDialog = true">
                 Follow entity
-                <md-icon v-if="followedEntity==''">add</md-icon>
+                <md-icon v-if="!followedEntity">add</md-icon>
                 <md-icon v-else>done</md-icon>
               </md-button>
-            
             </div>
-            
-            <link-to-entity v-if="this.entityType && this.entityType.includes('Group')"
-                            :visible="showSelectGroupEntityDialog" 
-                            :entityType="entityType"
-                            @closeSelection="closeSelectGroupEntityDialog"
-                            />
 
-            <link-to-spatial-entity v-else
-                            :visible="showSelectSpatialEntityDialog" 
-                            :entityType="entityType"
-                            @closeSelection="closeSelectSpatialEntityDialog"
-                            />
+            <link-to-entity
+              v-if="this.entityType && this.entityType.includes('Group')"
+              :visible="showSelectGroupEntityDialog"
+              :entityType="entityType"
+              @closeSelection="closeSelectGroupEntityDialog"
+            />
+
+            <link-to-spatial-entity
+              v-else
+              :visible="showSelectSpatialEntityDialog"
+              :entityType="entityType"
+              @closeSelection="closeSelectSpatialEntityDialog"
+            />
           </md-content>
-
         </md-step>
 
-        <!-- CONFIG -->
-        <md-step class="mdStep"
-                 :id="STEPPERS_DATA.config"
-                 md-label="Config"
-                 :md-done.sync="stepper.third">
+        <!-- Tracking method -->
+        <md-step
+          class="mdStep"
+          :id="STEPPERS_DATA.trackingMethod"
+          md-label="Tracking method"
+          :md-done.sync="stepper.third"
+        >
           <md-content class="contents md-scrollbar">
-            <md-field>
-                <label>Algorithm</label>
-                <md-select v-model="algorithm">
-                  <md-option
-                    v-for="data of CONST_ALGORITHMS"
-                    :key="data"
-                    :value="data"
-                    >{{ data }}</md-option
-                  >
-                </md-select>
+            <md-field class="fixed-size-field">
+              <label>Tracking Method</label>
+              <md-select v-model="trackingMethod">
+                <md-option
+                  v-for="data of CONST_TRACK_METHOD"
+                  :key="data"
+                  :value="data"
+                  >{{ data }}</md-option
+                >
+              </md-select>
             </md-field>
+            <md-field class="fixed-size-field" v-if="trackingMethod != ''">
+              <label>Filter Value</label>
+              <md-input v-model="filterValue"></md-input>
+            </md-field>
+          </md-content>
+        </md-step>
+
+        <!-- CONFIGURATION -->
+        <md-step
+          class="mdStep"
+          :id="STEPPERS_DATA.config"
+          md-label="Configuration"
+          :md-done.sync="stepper.fourth"
+        >
+          <md-content class="contents md-scrollbar">
+            <md-field class="fixed-size-field">
+              <label>Algorithm</label>
+              <md-select v-model="algorithm">
+                <md-option
+                  v-for="data of CONST_ALGORITHMS"
+                  :key="data"
+                  :value="data"
+                  >{{ data }}</md-option
+                >
+              </md-select>
+            </md-field>
+
+            <!-- Algorithm Description -->
+            <div v-if="algorithm != ''">
+              <p>
+                <strong> Description : </strong>
+                {{ CONST_ALGO_DOC_DESCRIPTION[algorithm] }}</p
+              >
+            </div>
 
             <!-- Algorithm Parameters -->
             <div v-if="algorithm != ''">
-              <md-field 
-                      v-for="(item, index) in algo_doc" :key="index">
-              <label>{{item.name}}, {{item.description}}</label>
-              <md-input :type="item.type" v-model="algorithmParameters[index]"></md-input>
+              <md-field
+                class="fixed-size-field"
+                v-for="(item, index) in algo_doc"
+                :key="index"
+              >
+                <label>{{ item.name }}, {{ item.description }}</label>
+                <md-input
+                  :type="item.type"
+                  v-model="algorithmParameters[index]"
+                ></md-input>
               </md-field>
             </div>
-            
-            <md-field>
-                <label>Result name</label>
-                <md-input v-model="resultName"></md-input>
-            </md-field>
-            <md-field>
-                <label>Result type</label>
-                <md-select v-model="resultType">
-                  <md-option
-                    v-for="data of CONST_ANALYTIC_RESULT_TYPE"
-                    :key="data"
-                    :value="data"
-                    >{{ data }}</md-option
-                  >
-                </md-select>
-            </md-field>
-            <md-field>
-                <label>Interval time (ms), 0 will make the analytic behave in COV mode</label>
-                <md-input type="number" v-model="intervalTime"></md-input>
-            </md-field>
 
+            <md-field class="fixed-size-field">
+              <label>Result name</label>
+              <md-input v-model="resultName"></md-input>
+            </md-field>
+            <md-field class="fixed-size-field">
+              <label>Result type</label>
+              <md-select v-model="resultType">
+                <md-option
+                  v-for="data of CONST_ANALYTIC_RESULT_TYPE"
+                  :key="data"
+                  :value="data"
+                  >{{ data }}</md-option
+                >
+              </md-select>
+            </md-field>
+            <md-field class="fixed-size-field">
+              <label
+                >Interval time (ms), 0 will make the analytic behave in COV
+                mode</label
+              >
+              <md-input type="number" v-model="intervalTime"></md-input>
+            </md-field>
           </md-content>
         </md-step>
 
         <!-- RECAP -->
-        <md-step class="mdStep"
-                 :id="STEPPERS_DATA.recap"
-                 md-label="Recap"
-                 :md-done.sync="stepper.fourth">
-
-
+        <md-step
+          class="mdStep"
+          :id="STEPPERS_DATA.recap"
+          md-label="Summary"
+          :md-done.sync="stepper.fifth"
+        >
+          <md-content class="contents md-scrollbar">
+            <div
+              v-for="(field, index) in summaryList"
+              :key="index"
+              class="summary-item"
+            >
+              <strong>{{ field.label }}:</strong>
+              {{ field.value === '' ? 'Missing !' : field.value }}
+            </div>
+          </md-content>
         </md-step>
-
       </md-steppers>
-
     </md-dialog-content>
 
     <md-dialog-actions>
-      <md-button class="md-primary"
-                 @click="closeDialog(false)">Close</md-button>
+      <md-button class="md-primary" @click="closeDialog(false)"
+        >Close</md-button
+      >
 
-      <md-button class="md-primary"
-                 v-if="stepper.active !== this.STEPPERS_DATA.recap"
-                 @click="PassToNextStep">Next
+      <md-button
+        class="md-primary"
+        v-if="stepper.active !== this.STEPPERS_DATA.recap"
+        @click="PassToNextStep"
+        >Next
       </md-button>
-      <md-button v-if="stepper.active === this.STEPPERS_DATA.recap"
-                 :disabled="isSaveButtonDisabled()"
-                 class="md-primary"
-                 @click="closeDialog(true)">Save</md-button>
+      <md-button
+        v-if="stepper.active === this.STEPPERS_DATA.recap"
+        :disabled="isSaveButtonDisabled()"
+        class="md-primary"
+        @click="closeDialog(true)"
+        >Save</md-button
+      >
     </md-dialog-actions>
-
   </md-dialog>
 </template>
 
 <script>
-
-import { spinalAnalyticService , ENTITY_TYPES ,
-          ALGORITHMS, ALGO_DOC, ANALYTIC_RESULT_TYPE, TRACK_METHOD} from "spinal-model-analysis";
+import {
+  spinalAnalyticService,
+  ENTITY_TYPES,
+  ALGORITHMS,
+  ALGO_DOC,
+  ALGO_DOC_DESCRIPTION,
+  ANALYTIC_RESULT_TYPE,
+  TRACK_METHOD,
+} from 'spinal-model-analysis';
 
 import testDialogVue from './components/testDialog.vue';
 import linkToEntityVue from './components/linkToEntity.vue';
 import linkToSpatialEntityVue from './components/linkToSpatialEntity.vue';
+import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 
 export default {
-  name: "createAnalyticDialog",
-  props: ["onFinised"],
+  name: 'createAnalyticDialog',
+  props: ['onFinised'],
   components: {
-    "test-dialog": testDialogVue,
-    "link-to-entity": linkToEntityVue,
-    "link-to-spatial-entity": linkToSpatialEntityVue
+    'test-dialog': testDialogVue,
+    'link-to-entity': linkToEntityVue,
+    'link-to-spatial-entity': linkToSpatialEntityVue,
   },
-  data() {  
+  data() {
     this.CONST_ALGORITHMS = ALGORITHMS;
     this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
     this.CONST_TRACK_METHOD = TRACK_METHOD;
     this.CONST_ALGO_DOC = ALGO_DOC;
-    
+    this.CONST_ALGO_DOC_DESCRIPTION = ALGO_DOC_DESCRIPTION;
 
     this.STEPPERS_DATA = {
-      analytic: "first",
-      inputs: "second",
-      config: "third",
-      recap: "fourth"
+      analytic: 'first',
+      followedEntity: 'second',
+      trackingMethod: 'third',
+      config: 'fourth',
+      recap: 'fifth',
     };
-    return {  
+    return {
       showDialog: true,
       showSelectSpatialEntityDialog: false,
-      showSelectGroupEntityDialog:false,
-      analyticName: "",
-      algorithm:"",
-      resultType:"",
-      resultName:"",
+      showSelectGroupEntityDialog: false,
+      analyticName: '',
+      algorithm: '',
+      resultType: '',
+      resultName: '',
       intervalTime: null,
-      algorithmParameters:[],
-      trackingMethod :"",
-      filterValue :"",
-      followedEntity :"",
-      selectedNode : undefined,
-      entityType : undefined,
+      algorithmParameters: [],
+      trackingMethod: '',
+      filterValue: '',
+      followedEntity: undefined,
+      selectedNode: undefined,
+      entityType: undefined,
 
       stepper: {
         active: this.STEPPERS_DATA.analytic,
@@ -232,17 +271,18 @@ export default {
         second: false,
         third: false,
         fourth: false,
+        fifth: false,
       },
     };
   },
   methods: {
     opened(option) {
       this.selectedNode = option.selectedNode;
-      this.entityType= this.selectedNode.entityType.get();
+      this.entityType = this.selectedNode.entityType.get();
     },
 
     async removed(res) {
-      if (res.closeResult){
+      if (res.closeResult) {
         /*console.log({
           entity: this.selectedNode,
           Analytic_name: this.analyticName,
@@ -256,39 +296,48 @@ export default {
           followedEntity: this.followedEntity,
         })*/
 
-
         // there must be a better way to get the context id...
-        const contextId = Object.keys(this.selectedNode.contextIds.get())[0]
+        const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
 
         //create analytic Node
         const IAnalytic = {
-            name: this.analyticName,
-            description :""
+          name: this.analyticName,
+          description: '',
         };
-        const analyticInfo = await spinalAnalyticService.addAnalytic(IAnalytic,contextId,this.selectedNode.id.get());
-        
-        
+        const analyticInfo = await spinalAnalyticService.addAnalytic(
+          IAnalytic,
+          contextId,
+          this.selectedNode.id.get()
+        );
+
         //create trackingMethod Node
         const ITrackingMethod = {
-            name: "TrackingMethod",
-            trackMethod: this.trackingMethod,
-            filterValue: this.filterValue
-        }
+          name: 'TrackingMethod',
+          trackMethod: this.trackingMethod,
+          filterValue: this.filterValue,
+        };
 
-        const trackingMethodInfo = await spinalAnalyticService.addInputTrackingMethod(ITrackingMethod,contextId,analyticInfo.id.get());
-        
+        const trackingMethodInfo =
+          await spinalAnalyticService.addInputTrackingMethod(
+            ITrackingMethod,
+            contextId,
+            analyticInfo.id.get()
+          );
+
         //create followedEntity Node
-        const followedEntityInfo = await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,
-        analyticInfo.id.get(),this.followedEntity);
-
+        const followedEntityInfo =
+          await spinalAnalyticService.addInputLinkToFollowedEntity(
+            contextId,
+            analyticInfo.id.get(),
+            this.followedEntity
+          );
 
         //create config Node
-        const IConfig  = {
-            algorithm: this.algorithm,
-            resultType: this.resultType,
-            resultName:this.resultName,
-            intervalTime: this.intervalTime,
-
+        const IConfig = {
+          algorithm: this.algorithm,
+          resultType: this.resultType,
+          resultName: this.resultName,
+          intervalTime: this.intervalTime,
         };
 
         const formattedAlgorithmParams = [];
@@ -297,33 +346,39 @@ export default {
           const paramValue = this.algorithmParameters[i];
           formattedAlgorithmParams.push({
             name: doc[i].name,
-            value: doc[i].type ==="number" ? +paramValue : paramValue,
-            type : doc[i].type
+            value: doc[i].type === 'number' ? +paramValue : paramValue,
+            type: doc[i].type,
           });
         }
-        
-        const configInfo = await spinalAnalyticService.addConfig(IConfig,formattedAlgorithmParams,analyticInfo.id.get(),contextId);
 
+        const configInfo = await spinalAnalyticService.addConfig(
+          IConfig,
+          formattedAlgorithmParams,
+          analyticInfo.id.get(),
+          contextId
+        );
       }
-      
+
       this.showDialog = false;
     },
+
     closeDialog(closeResult) {
-      if (typeof this.onFinised === "function") {
+      if (typeof this.onFinised === 'function') {
         this.onFinised({
           closeResult,
-          analyticName: this.analyticName
+          analyticName: this.analyticName,
         });
       }
     },
 
-    closeSelectSpatialEntityDialog (selectedEntity) {
+    closeSelectSpatialEntityDialog(selectedEntity) { 
+      console.log('selected Entity :', selectedEntity);
       this.followedEntity = selectedEntity;
       this.showSelectSpatialEntityDialog = false;
     },
 
-    closeSelectGroupEntityDialog(selectedGroup){
-      console.log("selected Entity :", selectedGroup);
+    closeSelectGroupEntityDialog(selectedGroup) {
+      console.log('selected Entity :', selectedGroup);
       this.followedEntity = selectedGroup;
       this.showSelectGroupEntityDialog = false;
     },
@@ -335,22 +390,25 @@ export default {
     changeStep(stepId) {
       if (stepId === this.STEPPERS_DATA.analytic) {
         this.stepper.active = stepId;
-        this.stepper.first = false;
       }
     },
 
     PassToNextStep() {
-      switch(this.stepper.active) {
+      switch (this.stepper.active) {
         case this.STEPPERS_DATA.analytic:
           this.stepper.first = true;
-          this.stepper.active = this.STEPPERS_DATA.inputs;
+          this.stepper.active = this.STEPPERS_DATA.followedEntity;
           break;
-        case this.STEPPERS_DATA.inputs:
+        case this.STEPPERS_DATA.followedEntity:
           this.stepper.second = true;
+          this.stepper.active = this.STEPPERS_DATA.trackingMethod;
+          break;
+        case this.STEPPERS_DATA.trackingMethod:
+          this.stepper.third = true;
           this.stepper.active = this.STEPPERS_DATA.config;
           break;
         case this.STEPPERS_DATA.config:
-          this.stepper.third = true;
+          this.stepper.fourth = true;
           this.stepper.active = this.STEPPERS_DATA.recap;
           break;
         case this.STEPPERS_DATA.recap:
@@ -358,38 +416,61 @@ export default {
       }
     },
 
-    isSaveButtonDisabled(){
-      if (this.analyticName === "" || this.algorithm === "" ||
-           this.resultType === "" || this.resultName === "" || this.intervalTime === null || this.trackingMethod === "" || this.filterValue === "" || this.followedEntity === ""){
-        return true;
-      }
-      return false;
-    }
+    isSaveButtonDisabled() {
+      return (
+        this.analyticName === '' ||
+        this.algorithm === '' ||
+        this.resultType === '' ||
+        this.resultName === '' ||
+        this.intervalTime === null ||
+        this.trackingMethod === '' ||
+        this.filterValue === '' ||
+        !this.followedEntity
+      );
+    },
   },
-  computed : {
-    algo_doc () {
+
+  computed: {
+    algo_doc() {
       return ALGO_DOC[this.algorithm];
     },
-    isGroupEntitySelected(){
+
+    isGroupEntitySelected() {
       if (this.selectedNode === undefined) return false;
-      return this.selectedNode.entityType.get().includes("Group");
+      return this.selectedNode.entityType.get().includes('Group');
     },
 
-    
+    followedEntityName(){
+      if (!this.followedEntity ) return '';
+      const info = SpinalGraphService.getInfo(this.followedEntity);
+      console.log(info);
+      return info.name.get();
+    },
 
-
-  }
+    summaryList() {
+      return [
+        { label: 'Analytic Name', value: this.analyticName },
+        { label: 'Tracking Method', value: this.trackingMethod },
+        { label: 'Filter Value', value: this.filterValue },
+        { label: 'Followed Entity', value: this.followedEntity },
+        { label: 'Algorithm', value: this.algorithm },
+        {
+          label: 'Algorithm Parameters',
+          value: JSON.stringify(this.algorithmParameters),
+        },
+        { label: 'Result Name', value: this.resultName },
+        { label: 'Result Type', value: this.resultType },
+        { label: 'Interval Time (ms)', value: this.intervalTime },
+      ];
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* .dialogForm { 
-   display: flex; 
-  flex-direction: column; 
- } */
-
 .mdDialog {
-  width: 800px;
+  width: 1000px;
+  max-width: 1000px;
   height: 550px;
 }
 
@@ -398,15 +479,30 @@ export default {
 }
 
 .mdDialog .mdDialogContainer {
-  width: 100%;
+  width: 1000px;
+  max-width: 1000px;
   height: 100%;
   overflow: hidden;
 }
 
+.fixed-size-field {
+  width: 85%;
+  max-width: 85%;
+}
+
+.md-dialog-actions {
+  padding: 8px 16px; /* Add this line */
+  margin: 0; /* Add this line */
+}
+
+.md-button {
+  margin: 0 8px; /* Add this line */
+}
+
 .mdDialog .mdDialogContainer .mdStep {
   height: 350px;
-  overflow: hidden;
   padding: 10px 0px;
+  overflow: hidden;
 }
 
 .mdDialog .mdDialogContainer .mdStep .contents {
@@ -416,20 +512,15 @@ export default {
   overflow: auto;
 }
 
-
-
-
-/* .mdDialog .mdDialogContainer .contents.contextName {
-  display: flex;
-  align-items: center;
+.mdDialog .mdDialogContainer .mdStep .contents .summary-item {
+  padding: 8px 0;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.mdDialog .mdDialogContainer .actions {
-  width: 100%;
-  height: 50px;
-  display: flex;
-  justify-content: flex-end;
-} */
+.mdDialog .mdDialogContainer .mdStep .contents .summary-item strong {
+  margin-right: 8px;
+}
 </style>
 
 <style>
