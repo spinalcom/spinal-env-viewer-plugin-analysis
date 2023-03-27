@@ -36,33 +36,48 @@
         >
           <md-content class="contents md-scrollbar">
             <div>
-              <p> The followed entity is the source that is providing the inputs.</p>
-              <p> For exemple, if the target entity type is Room and the followed entity is a room, 
-                  the analytic will be applied to that specific room.</p>
-              <p> If the target entity type is Room and the followed entity is a group of rooms, 
-                  the analytic will be applied to all the rooms of the group.</p>
-              
-              <p > <strong> Currently selected node  </strong>: {{!followedEntity ? 'None' : followedEntityName }} </p>
-              <md-button
-                @click="showSelectGroupEntityDialog = true"
+              <p>
+                The followed entity is the source that is providing the
+                inputs.</p
               >
+              <p>
+                For exemple, if the target entity type is Room and the followed
+                entity is a room, the analytic will be applied to that specific
+                room.</p
+              >
+              <p>
+                If the target entity type is Room and the followed entity is a
+                group of rooms, the analytic will be applied to all the rooms of
+                the group.</p
+              >
+
+              <p>
+                <strong> Currently selected node </strong>:
+                {{ !followedEntity ? 'None' : followedEntityName }}
+              </p>
+              <md-button @click="showSelectGroupEntityDialog = true">
                 Follow group entity
               </md-button>
 
-              <md-button v-if="!isGroupEntitySelected" @click="showSelectSpatialEntityDialog = true">
+              <md-button
+                v-if="!isGroupEntitySelected"
+                @click="showSelectSpatialEntityDialog = true"
+              >
                 Follow spatial entity
               </md-button>
             </div>
 
             <link-to-entity
-              v-if="this.entityType"
+              v-if="entityType"
               :visible="showSelectGroupEntityDialog"
-              :entityType="entityType.includes('Group') ? entityType : entityType+'Group'"
+              :entityType="
+                entityType.includes('Group') ? entityType : entityType + 'Group'
+              "
               @closeSelection="closeSelectGroupEntityDialog"
             />
 
             <link-to-spatial-entity
-              v-if="!isGroupEntitySelected"
+              v-if="entityType"
               :visible="showSelectSpatialEntityDialog"
               :entityType="entityType"
               @closeSelection="closeSelectSpatialEntityDialog"
@@ -93,6 +108,16 @@
               <label>Filter Value</label>
               <md-input v-model="filterValue"></md-input>
             </md-field>
+            <md-button
+              class="md-primary"
+              :disabled="isPreviewDisabled"
+              @click="getPreviewData()"
+            >
+              Preview
+            </md-button>
+            <div>
+              <pre>{{ previewData }}</pre>
+            </div>
           </md-content>
         </md-step>
 
@@ -216,6 +241,8 @@ import {
   ALGO_DOC_DESCRIPTION,
   ANALYTIC_RESULT_TYPE,
   TRACK_METHOD,
+  findControlEndpoints,
+  findEndpoints,
 } from 'spinal-model-analysis';
 
 import testDialogVue from './components/testDialog.vue';
@@ -260,6 +287,7 @@ export default {
       followedEntity: undefined,
       selectedNode: undefined,
       entityType: undefined,
+      previewData: '',
 
       stepper: {
         active: this.STEPPERS_DATA.analytic,
@@ -367,7 +395,7 @@ export default {
       }
     },
 
-    closeSelectSpatialEntityDialog(selectedEntity) { 
+    closeSelectSpatialEntityDialog(selectedEntity) {
       console.log('selected Entity :', selectedEntity);
       this.followedEntity = selectedEntity;
       this.showSelectSpatialEntityDialog = false;
@@ -424,6 +452,137 @@ export default {
         !this.followedEntity
       );
     },
+
+    /*async getPreviewData() {
+      const previewData = {};
+      const processSubEntities = async (subEntities) => {
+        for (const subEntity of subEntities) {
+          const capturedInputs = await spinalAnalyticService.applyTrackingMethodWithParams(
+            this.trackingMethod,
+            this.filterValue,
+            subEntity
+          );
+          const subEntityName = subEntity.name.get();
+          previewData[name][subEntityName] = [];
+          for (const capturedInput of capturedInputs) {
+            const capturedInputName = capturedInput.name.get();
+            previewData[name][subEntityName] = capturedInputName;
+          }
+        }
+      };
+
+      console.log('Calling getPreviewData');
+      const followedEntityInfo = SpinalGraphService.getInfo(
+        this.followedEntity
+      );
+      const name = followedEntityInfo.name.get();
+      previewData[name] = {};
+
+      if (this.entityType == followedEntityInfo.type.get()) {
+        // apply trackingMethod and show captured inputs
+        spinalAnalyticService
+          .applyTrackingMethodWithParams(
+            this.trackingMethod,
+            this.filterValue,
+            followedEntityInfo
+          )
+          .then((capturedInputs) => {
+            for (const capturedInput of capturedInputs) {
+              const capturedInputName = capturedInput.name.get();
+              this.previewData[name].push(capturedInputName);
+            }
+          });
+      } else {
+        // get sub entities
+        const isGroup = followedEntityInfo.type.get().includes('group');
+        if (followedEntityInfo.type.get().includes('Group')) {
+          // get them through the relation
+          const relationNameToSubEntities = 'groupHas' + this.entityType;
+          const subEntities = await SpinalGraphService.getChildren(
+          followedEntityInfo.id.get(),
+          [relationNameToSubEntities]
+          );
+          await processSubEntities(subEntities);
+
+        } else {
+          // get them through spatial context
+          console.log('Getting sub entities through spatial context');
+          const spatialContextId =
+            SpinalGraphService.getContext('spatial').info.id.get();
+          const subEntities = await SpinalGraphService.findInContextByType(
+            this.followedEntity,
+            spatialContextId,
+            this.entityType
+          );
+          await processSubEntities(subEntities);
+        }
+      }
+
+      console.log('previewData :', previewData);
+      this.previewData=JSON.stringify(previewData, null, 2);
+
+    },*/
+
+    async getPreviewData() {
+      const getCapturedInputs = async (entity) => {
+        const capturedInputs =
+          await spinalAnalyticService.applyTrackingMethodWithParams(
+            this.trackingMethod,
+            this.filterValue,
+            entity
+          );
+        return capturedInputs.map((input) => input.name.get());
+      };
+
+      const processSubEntities = async (
+        subEntities,
+        parentEntityName,
+        previewData
+      ) => {
+        for (const subEntity of subEntities) {
+          const subEntityName = subEntity.name.get();
+          const capturedInputs = await getCapturedInputs(subEntity);
+          previewData[parentEntityName][subEntityName] = capturedInputs;
+        }
+      };
+
+      console.log('Calling getPreviewData');
+
+      const followedEntityInfo = SpinalGraphService.getInfo(
+        this.followedEntity
+      );
+      const followedEntityName = followedEntityInfo.name.get();
+      const previewData = { [followedEntityName]: {} };
+
+      if (this.entityType === followedEntityInfo.type.get()) {
+        const capturedInputs = await getCapturedInputs(followedEntityInfo);
+        previewData[followedEntityName] = capturedInputs;
+      } else {
+        const isGroup = followedEntityInfo.type.get().includes('Group');
+        let subEntities;
+        if (isGroup) {
+          const relationNameToSubEntities = 'groupHas' + this.entityType;
+          subEntities = await SpinalGraphService.getChildren(
+            followedEntityInfo.id.get(),
+            [relationNameToSubEntities]
+          );
+        } else {
+          console.log('Getting sub entities through spatial context');
+          const spatialContextId =
+            SpinalGraphService.getContext('spatial').info.id.get();
+          subEntities = await SpinalGraphService.findInContextByType(
+            this.followedEntity,
+            spatialContextId,
+            this.entityType
+          );
+        }
+
+        await processSubEntities(subEntities, followedEntityName, previewData);
+      }
+
+      console.log('previewData :', previewData);
+      this.previewData = JSON.stringify(previewData, null, 2);
+    },
   },
 
   computed: {
@@ -433,14 +592,22 @@ export default {
 
     isGroupEntitySelected() {
       if (this.selectedNode === undefined) return false;
-      return this.selectedNode.entityType.get().includes('Group');
+      return this.entityType.includes('Group');
     },
 
-    followedEntityName(){
-      if (!this.followedEntity ) return '';
+    followedEntityName() {
+      if (!this.followedEntity) return '';
       const info = SpinalGraphService.getInfo(this.followedEntity);
       console.log(info);
       return `${info.name.get()} | Type : ${info.type.get()} | Node id : ${info.id.get()}`;
+    },
+
+    isPreviewDisabled() {
+      return (
+        !this.followedEntity ||
+        this.trackingMethod === '' ||
+        this.filterValue === ''
+      );
     },
 
     summaryList() {

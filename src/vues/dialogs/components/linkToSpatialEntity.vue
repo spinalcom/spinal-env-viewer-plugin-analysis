@@ -36,7 +36,7 @@ with this file. If not, see
           :title="'Buildings'"
           :data="data"
           :itemSelected="buildingSelected"
-          @select="selectContext"
+          @select="selectBuilding"
         ></link-template>
       </div>
 
@@ -45,7 +45,7 @@ with this file. If not, see
           :title="'Floors'"
           :data="floors"
           :itemSelected="floorSelected"
-          @select="selectCategory"
+          @select="selectFloor"
           :disableBtn="!buildingSelected"
         ></link-template>
       </div>
@@ -55,7 +55,7 @@ with this file. If not, see
           :title="'Rooms'"
           :data="rooms"
           :itemSelected="roomSelected"
-          @select="selectGroup"
+          @select="selectRoom"
           :disableBtn="!floorSelected"
         ></link-template>
       </div>
@@ -66,7 +66,7 @@ with this file. If not, see
       >
       <md-button
         class="md-primary"
-        :disabled="disabled()"
+        :disabled="!buildingSelected"
         @click="closeDialog(true)"
         >Save</md-button
       >
@@ -97,37 +97,38 @@ export default {
       buildingSelected: undefined,
       floorSelected: undefined,
       roomSelected: undefined,
+
       items: [],
       spatialContextId: undefined,
     };
   },
 
   mounted() {
-    console.log('mounted');
     this.getAllData();
     this.spatialContextId =
       SpinalGraphService.getContext('spatial').info.id.get();
   },
 
   methods: {
-    opened(option) {},
 
     closeDialog(closeResult) {
       if (!closeResult) {
         this.$emit('closeSelection', undefined);
       } else {
-        switch (this.entityType) {
-          case 'geographicBuilding':
-            this.$emit('closeSelection', this.buildingSelected);
-            break;
-          case 'geographicFloor':
+          if(this.roomSelected){
+            this.$emit('closeSelection', this.roomSelected); 
+            return;   
+          }
+          if(this.floorSelected){
             this.$emit('closeSelection', this.floorSelected);
-            break;
-          case 'geographicRoom':
-            this.$emit('closeSelection', this.roomSelected);
-            break;
+            return;
+          }
+          if(this.buildingSelected){
+            this.$emit('closeSelection', this.buildingSelected);
+            return;
+          }
             
-        }
+        
       }
     },
 
@@ -137,17 +138,6 @@ export default {
         //this.updateCategory();
         //this.updateGroups();
       });
-    },
-
-    disabled() {
-      switch (this.entityType) {
-        case 'geographicBuilding':
-          return !this.buildingSelected;
-        case 'geographicFloor':
-          return !this.floorSelected;
-        case 'geographicRoom':
-          return !this.roomSelected;
-      }
     },
 
     //////////////////////////////////////////////////////////////////
@@ -181,17 +171,20 @@ export default {
       }
     },
 
-    selectContext(id) {
+    selectBuilding(id) {
       console.log('select building ', id);
       this.buildingSelected = id;
+      this.floorSelected = undefined;
+      this.roomSelected = undefined;
     },
 
-    selectCategory(id) {
+    selectFloor(id) {
       console.log('select floor ', id);
       this.floorSelected = id;
+      this.roomSelected = undefined;
     },
 
-    selectGroup(id) {
+    selectRoom(id) {
       console.log('select room ', id);
       this.roomSelected = id;
     },

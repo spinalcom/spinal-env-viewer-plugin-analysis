@@ -2,9 +2,10 @@
    <md-dialog
       class="mdDialogContainer"
       :md-active.sync="visible"
-   >
+    >
       <md-dialog-title class="dialogTitle">Link to Group</md-dialog-title>
       <md-dialog-content class="content">
+   
 
          <div class="section">
             <link-template
@@ -85,7 +86,7 @@ export default {
    },
 
    mounted() {
-      this.type = this.entityType+"Context";
+      this.type = this.entityType + "Context";
       this.getAllData();
    
    },
