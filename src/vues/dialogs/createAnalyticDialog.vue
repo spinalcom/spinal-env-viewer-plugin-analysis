@@ -92,7 +92,7 @@
           md-label="Tracking method"
           :md-done.sync="stepper.third"
         >
-          <md-content class="contents md-scrollbar">
+          <md-content class="">
             <md-field class="fixed-size-field">
               <label>Tracking Method</label>
               <md-select v-model="trackingMethod">
@@ -105,7 +105,7 @@
               </md-select>
             </md-field>
             <md-field class="fixed-size-field" v-if="trackingMethod != ''">
-              <label>Filter Value</label>
+              <label>Filter Value ( Case sensitive )</label>
               <md-input v-model="filterValue"></md-input>
             </md-field>
             <md-button
@@ -115,8 +115,11 @@
             >
               Preview
             </md-button>
-            <div>
-              <pre>{{ previewData }}</pre>
+            
+          </md-content>
+          <md-content class="contents md-scrollbar">
+            <div class="json-preview">
+             <pre>{{ prettyData }}</pre>
             </div>
           </md-content>
         </md-step>
@@ -581,7 +584,8 @@ export default {
       }
 
       console.log('previewData :', previewData);
-      this.previewData = JSON.stringify(previewData, null, 2);
+      //this.previewData = JSON.stringify(previewData, null, 2);
+      this.previewData = previewData;
     },
   },
 
@@ -626,6 +630,10 @@ export default {
         { label: 'Interval Time (ms)', value: this.intervalTime },
       ];
     },
+
+    prettyData() {
+      return JSON.stringify(this.previewData, null, 2);
+    },
   },
 };
 </script>
@@ -634,7 +642,7 @@ export default {
 .mdDialog {
   width: 1000px;
   max-width: 1000px;
-  height: 550px;
+  height: 600px;
 }
 
 .mdDialog .mdDialogTitle {
@@ -684,6 +692,22 @@ export default {
 .mdDialog .mdDialogContainer .mdStep .contents .summary-item strong {
   margin-right: 8px;
 }
+
+.json-preview {
+  background-color: #1e1e1e;
+  border: 2px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 20px;
+  color: #ffffff;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.json-preview pre {
+  margin: 0;
+}
+
 </style>
 
 <style>
