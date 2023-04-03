@@ -182,6 +182,19 @@
                 >
               </md-select>
             </md-field>
+
+            <div v-if="resultType == CONST_ANALYTIC_RESULT_TYPE.TICKET">
+              <md-field class="fixed-size-field">
+                <label>Ticket/Alarm context id</label>
+                <md-input v-model="ticketContextId"></md-input>
+              </md-field>
+              <md-field class="fixed-size-field">
+                <label>Ticket/Alarm process id </label>
+                <md-input v-model="ticketProcessId"></md-input>
+              </md-field>
+            </div>
+
+
             <md-field class="fixed-size-field">
               <label
                 >Interval time (ms), 0 will make the analytic behave in COV
@@ -239,6 +252,7 @@
 import {
   spinalAnalyticService,
   ENTITY_TYPES,
+  CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
   ALGORITHMS,
   ALGO_DOC,
   ALGO_DOC_DESCRIPTION,
@@ -267,7 +281,7 @@ export default {
     this.CONST_TRACK_METHOD = TRACK_METHOD;
     this.CONST_ALGO_DOC = ALGO_DOC;
     this.CONST_ALGO_DOC_DESCRIPTION = ALGO_DOC_DESCRIPTION;
-
+    this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS = CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
     this.STEPPERS_DATA = {
       analytic: 'first',
       followedEntity: 'second',
@@ -291,6 +305,8 @@ export default {
       selectedNode: undefined,
       entityType: undefined,
       previewData: '',
+      ticketContextId:'',
+      ticketProcessId:'',
 
       stepper: {
         active: this.STEPPERS_DATA.analytic,
@@ -384,6 +400,24 @@ export default {
           analyticInfo.id.get(),
           contextId
         );
+
+        if(this.ticketContextId && this.ticketProcessId){
+          const formattedTicketAttributes = [];
+          formattedTicketAttributes.push({
+            name: "ticketContextId",
+            value: this.ticketContextId,
+            type: 'string',
+          });
+          formattedTicketAttributes.push({
+            name: "ticketProcessId",
+            value: this.ticketProcessId,
+            type: 'string',
+          });
+
+          await spinalAnalyticService.addAttributesToConfig(configInfo.id.get(),this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
+          formattedTicketAttributes);
+        }
+        
       }
 
       this.showDialog = false;
@@ -455,76 +489,6 @@ export default {
         !this.followedEntity
       );
     },
-
-    /*async getPreviewData() {
-      const previewData = {};
-      const processSubEntities = async (subEntities) => {
-        for (const subEntity of subEntities) {
-          const capturedInputs = await spinalAnalyticService.applyTrackingMethodWithParams(
-            this.trackingMethod,
-            this.filterValue,
-            subEntity
-          );
-          const subEntityName = subEntity.name.get();
-          previewData[name][subEntityName] = [];
-          for (const capturedInput of capturedInputs) {
-            const capturedInputName = capturedInput.name.get();
-            previewData[name][subEntityName] = capturedInputName;
-          }
-        }
-      };
-
-      console.log('Calling getPreviewData');
-      const followedEntityInfo = SpinalGraphService.getInfo(
-        this.followedEntity
-      );
-      const name = followedEntityInfo.name.get();
-      previewData[name] = {};
-
-      if (this.entityType == followedEntityInfo.type.get()) {
-        // apply trackingMethod and show captured inputs
-        spinalAnalyticService
-          .applyTrackingMethodWithParams(
-            this.trackingMethod,
-            this.filterValue,
-            followedEntityInfo
-          )
-          .then((capturedInputs) => {
-            for (const capturedInput of capturedInputs) {
-              const capturedInputName = capturedInput.name.get();
-              this.previewData[name].push(capturedInputName);
-            }
-          });
-      } else {
-        // get sub entities
-        const isGroup = followedEntityInfo.type.get().includes('group');
-        if (followedEntityInfo.type.get().includes('Group')) {
-          // get them through the relation
-          const relationNameToSubEntities = 'groupHas' + this.entityType;
-          const subEntities = await SpinalGraphService.getChildren(
-          followedEntityInfo.id.get(),
-          [relationNameToSubEntities]
-          );
-          await processSubEntities(subEntities);
-
-        } else {
-          // get them through spatial context
-          console.log('Getting sub entities through spatial context');
-          const spatialContextId =
-            SpinalGraphService.getContext('spatial').info.id.get();
-          const subEntities = await SpinalGraphService.findInContextByType(
-            this.followedEntity,
-            spatialContextId,
-            this.entityType
-          );
-          await processSubEntities(subEntities);
-        }
-      }
-
-      console.log('previewData :', previewData);
-      this.previewData=JSON.stringify(previewData, null, 2);
-
-    },*/
 
     async getPreviewData() {
       const getCapturedInputs = async (entity) => {
