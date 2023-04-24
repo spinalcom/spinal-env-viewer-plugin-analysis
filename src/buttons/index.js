@@ -1,5 +1,6 @@
 import createEntity from "./createEntity";
 import createAnalytic from "./createAnalytic";
+import modifyAnalytic from "./modifyAnalytic";
 
 import {
    CreateContextButton
@@ -23,5 +24,6 @@ spinalContextMenuService.registerApp(
 
 export {
   createEntity,
-  createAnalytic
+  createAnalytic,
+  modifyAnalytic
 }

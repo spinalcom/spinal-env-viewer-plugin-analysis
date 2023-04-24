@@ -5,7 +5,7 @@
     @md-closed="closeDialog(false)"
     class="mdDialog"
   >
-    <md-dialog-title class="mdDialogTitle"> Create Analytic </md-dialog-title>
+    <md-dialog-title class="mdDialogTitle"> Modify Analytic </md-dialog-title>
 
     <md-dialog-content class="mdDialogContainer">
       <md-steppers
@@ -13,27 +13,13 @@
         @md-changed="changeStep"
         md-linear
       >
-        <!-- Analytic name -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.analytic"
-          md-label="Analytic"
-          :md-done.sync="stepper.first"
-        >
-          <md-content class="contents">
-            <md-field class="fixed-size-field">
-              <label>Analytic name</label>
-              <md-input v-model="analyticName"></md-input>
-            </md-field>
-          </md-content>
-        </md-step>
-
+        
         <!-- Followed entity -->
         <md-step
           class="mdStep"
           :id="STEPPERS_DATA.followedEntity"
           md-label="Followed entity"
-          :md-done.sync="stepper.second"
+          :md-done.sync="stepper.first"
         >
           <md-content class="contents md-scrollbar">
             <div>
@@ -91,7 +77,7 @@
           class="mdStep"
           :id="STEPPERS_DATA.trackingMethod"
           md-label="Tracking method"
-          :md-done.sync="stepper.third"
+          :md-done.sync="stepper.second"
         >
           <md-content class="">
             <md-field class="fixed-size-field">
@@ -129,7 +115,7 @@
           class="mdStep"
           :id="STEPPERS_DATA.config"
           md-label="Configuration"
-          :md-done.sync="stepper.fourth"
+          :md-done.sync="stepper.third"
         >
           <md-content class="contents md-scrollbar">
             <md-field class="fixed-size-field">
@@ -209,7 +195,7 @@
           class="mdStep"
           :id="STEPPERS_DATA.recap"
           md-label="Summary"
-          :md-done.sync="stepper.fifth"
+          :md-done.sync="stepper.fourth"
         >
           <md-content class="contents md-scrollbar">
             <div
@@ -270,7 +256,7 @@ import linkToSpatialEntityVue from './components/linkToSpatialEntity.vue';
 import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 
 export default {
-  name: 'createAnalyticDialog',
+  name: 'modifyAnalyticDialog',
   props: ['onFinised'],
   components: {
     'test-dialog': testDialogVue,
@@ -292,11 +278,10 @@ export default {
     this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS = 
       CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS;
     this.STEPPERS_DATA = {
-      analytic: 'first',
-      followedEntity: 'second',
-      trackingMethod: 'third',
-      config: 'fourth',
-      recap: 'fifth',
+      followedEntity: 'first',
+      trackingMethod: 'second',
+      config: 'third',
+      recap: 'fourth',
     };
     return {
       showDialog: true,
@@ -318,19 +303,64 @@ export default {
       ticketProcessId: '',
 
       stepper: {
-        active: this.STEPPERS_DATA.analytic,
+        active: this.STEPPERS_DATA.followedEntity,
         first: false,
         second: false,
         third: false,
         fourth: false,
-        fifth: false,
       },
     };
   },
   methods: {
-    opened(option) {
+    async opened(option) {
       this.selectedNode = option.selectedNode;
-      this.entityType = this.selectedNode.entityType.get();
+      // selectedNode is the analytic node
+      const selectedNodeId = this.selectedNode.id.get();
+      const entity = await spinalAnalyticService.getEntityFromAnalytic(selectedNodeId);
+      this.entityType = entity.entityType.get();
+      this.analyticName = this.selectedNode.name.get();
+      const followedEntityNode = await spinalAnalyticService.getFollowedEntity(selectedNodeId);
+      this.followedEntity = followedEntityNode ? followedEntityNode.id.get() : undefined;
+      const trackingMethodNode = await spinalAnalyticService.getTrackingMethod(selectedNodeId);
+      const trackingParams = await spinalAnalyticService.getAttributesFromNode(
+        trackingMethodNode.id.get(),
+        this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+      );
+      const configNode = await spinalAnalyticService.getConfig(selectedNodeId);
+      const configAlgoParams = await spinalAnalyticService.getAttributesFromNode(
+        configNode.id.get(),
+        this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
+      );
+      const configResultParams = await spinalAnalyticService.getAttributesFromNode(
+        configNode.id.get(),
+        this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
+      );
+
+      function extractParams(obj) {
+        const params = Object.keys(obj).filter(key => /^p\d/.test(key));
+        const extractedParams = [];
+
+        for (const key of params) {
+          extractedParams.push(obj[key]);
+        }
+        return extractedParams;
+      }
+
+      this.algorithm = configAlgoParams['algorithm'];
+      this.intervalTime = configAlgoParams['intervalTime'];
+      this.algorithmParameters = extractParams(configAlgoParams);
+      this.resultType= configResultParams['resultType'];
+      if (this.resultType === this.CONST_ANALYTIC_RESULT_TYPE.TICKET){
+        const configTicketParameters = await spinalAnalyticService.getAttributesFromNode(
+          configNode.id.get(),
+          this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
+        );
+        this.ticketContextId = configTicketParameters['ticketContextId'];
+        this.ticketProcessId = configTicketParameters['ticketProcessId'];
+      }
+      this.resultName = configResultParams['resultName'];
+      this.trackingMethod= trackingParams['trackMethod'];
+      this.filterValue= trackingParams['filterValue'];
     },
 
     async removed(res) {
@@ -350,42 +380,37 @@ export default {
 
         // there must be a better way to get the context id...
         const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
-
-        //create analytic Node
-        const IAnalytic = {
-          name: this.analyticName,
-          description: '',
-        };
-        const analyticInfo = await spinalAnalyticService.addAnalytic(
-          IAnalytic,
-          contextId,
-          this.selectedNode.id.get()
-        );
-
-        //create trackingMethod Node
+        const followedEntityNodeRef = await spinalAnalyticService.getFollowedEntity(this.selectedNode.id.get());
+        if (followedEntityNodeRef && followedEntityNodeRef.id.get() !== this.followedEntity) {
+          console.log("change followed entity");
+          await spinalAnalyticService.removeLinkToFollowedEntity(this.selectedNode.id.get(), followedEntityNodeRef.id.get());
+          await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,this.selectedNode.id.get(), this.followedEntity);
+        }
+        if(!followedEntityNodeRef){
+          await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,this.selectedNode.id.get(), this.followedEntity);
+        }
         const trackingMethodAttributes = {};
         trackingMethodAttributes[this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS] =
           [
             { name: 'trackMethod', type: 'string', value: this.trackingMethod },
             { name: 'filterValue', type: 'string', value: this.filterValue }
           ];
+        const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(
+          this.selectedNode.id.get(),
+        );
+        const trackingMethodNode =  SpinalGraphService.getRealNode(
+          trackingMethodNodeRef.id.get(),
+        );
 
-        const trackingMethodInfo =
-          await spinalAnalyticService.addInputTrackingMethod(
-            trackingMethodAttributes,
-            contextId,
-            analyticInfo.id.get()
-          );
 
-        //create followedEntity Node
-        const followedEntityInfo =
-          await spinalAnalyticService.addInputLinkToFollowedEntity(
-            contextId,
-            analyticInfo.id.get(),
-            this.followedEntity
-          );
+        await spinalAnalyticService.addAttributesToNode(
+          trackingMethodNode,
+          trackingMethodAttributes,
+        );
 
-        //create config Node
+
+
+
         const configAttributes = {};
         configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] =
           [];
@@ -438,12 +463,20 @@ export default {
           /*await spinalAnalyticService.addAttributesToConfig(configInfo.id.get(),this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
           formattedTicketAttributes);*/
         }
+
         console.log('configAttributes :', configAttributes);
-        const configInfo = await spinalAnalyticService.addConfig(
-          configAttributes,
-          analyticInfo.id.get(),
-          contextId
+        const configNodeRef = await spinalAnalyticService.getConfig(
+          this.selectedNode.id.get()
         );
+        const configNode = SpinalGraphService.getRealNode(
+          configNodeRef.id.get()
+        );
+        await spinalAnalyticService.addAttributesToNode(
+          configNode,
+          configAttributes
+        );
+        
+        
       }
 
       this.showDialog = false;
@@ -461,13 +494,13 @@ export default {
     closeSelectSpatialEntityDialog(selectedEntity) {
       console.log('selected Entity :', selectedEntity);
       this.followedEntity = selectedEntity;
-      console.log('this.followedEntity :', this.followedEntity); //!!
       this.showSelectSpatialEntityDialog = false;
     },
 
     closeSelectGroupEntityDialog(selectedGroup) {
       console.log('selected Entity :', selectedGroup);
       this.followedEntity = selectedGroup;
+      console.log('this.followedEntity :', this.followedEntity);
       this.showSelectGroupEntityDialog = false;
     },
 
@@ -483,20 +516,16 @@ export default {
 
     PassToNextStep() {
       switch (this.stepper.active) {
-        case this.STEPPERS_DATA.analytic:
-          this.stepper.first = true;
-          this.stepper.active = this.STEPPERS_DATA.followedEntity;
-          break;
         case this.STEPPERS_DATA.followedEntity:
-          this.stepper.second = true;
+          this.stepper.first = true;
           this.stepper.active = this.STEPPERS_DATA.trackingMethod;
           break;
         case this.STEPPERS_DATA.trackingMethod:
-          this.stepper.third = true;
+          this.stepper.second = true;
           this.stepper.active = this.STEPPERS_DATA.config;
           break;
         case this.STEPPERS_DATA.config:
-          this.stepper.fourth = true;
+          this.stepper.third = true;
           this.stepper.active = this.STEPPERS_DATA.recap;
           break;
         case this.STEPPERS_DATA.recap:
@@ -587,7 +616,7 @@ export default {
 
     isGroupEntitySelected() {
       if (this.selectedNode === undefined) return false;
-      return this.entityType.includes('Group');
+      return this.entityType ? this.entityType.includes('Group') : false;
     },
 
     followedEntityName() {

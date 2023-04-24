@@ -3,6 +3,7 @@ const { SpinalMountExtention  } = require("spinal-env-viewer-panel-manager-servi
 import CreateAnalyticContextDialog from "./createContextDialog.vue";
 import createEntityDialog from "./createEntityDialog.vue";
 import createAnalyticDialog from "./createAnalyticDialog.vue"
+import modifyAnalyticDialog from "./modifyAnalyticDialog.vue"
 
 
 const dialogs = [
@@ -20,7 +21,13 @@ const dialogs = [
       name: "createAnalyticDialog",
       vueMountComponent: vue.extend(createAnalyticDialog),
       parentContainer: document.body
+    },
+    {
+      name: "modifyAnalyticDialog",
+      vueMountComponent: vue.extend(modifyAnalyticDialog),
+      parentContainer: document.body
     }
+
 ];
 
 for (let index = 0; index < dialogs.length; index++) {
