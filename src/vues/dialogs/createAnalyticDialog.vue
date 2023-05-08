@@ -13,215 +13,58 @@
         @md-changed="changeStep"
         md-linear
       >
-        <!-- Analytic name -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.analytic"
-          md-label="Analytic"
-          :md-done.sync="stepper.first"
+        <analytic-name
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          v-bind:analyticName.sync="analyticName"
+          :editable="true"
+        ></analytic-name>
+
+        <followed-entity
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          :entityType="entityType"
+          v-bind:followedEntity.sync="followedEntity"
+        ></followed-entity>
+
+        <tracking-method
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          :entityType="entityType"
+          :followedEntity="followedEntity"
+          v-bind:trackingMethod.sync="trackingMethod"
+          v-bind:filterValue.sync="filterValue"
+          v-bind:trackingIntervalTime.sync="trackingIntervalTime"
         >
-          <md-content class="contents">
-            <md-field class="fixed-size-field">
-              <label>Analytic name</label>
-              <md-input v-model="analyticName"></md-input>
-            </md-field>
-          </md-content>
-        </md-step>
+        </tracking-method>
 
-        <!-- Followed entity -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.followedEntity"
-          md-label="Followed entity"
-          :md-done.sync="stepper.second"
+        <configuration
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          v-bind:algorithm.sync="algorithm"
+          v-bind:algorithmParameters.sync="algorithmParameters"
+          v-bind:resultName.sync="resultName"
+          v-bind:resultType.sync="resultType"
+          v-bind:intervalTime.sync="intervalTime"
+          v-bind:ticketContextId.sync="ticketContextId"
+          v-bind:ticketProcessId.sync="ticketProcessId"
         >
-          <md-content class="contents md-scrollbar">
-            <div>
-              <p>
-                The followed entity is the source that is providing the
-                inputs.</p
-              >
-              <p>
-                For exemple, if the target entity type is Room and the followed
-                entity is a room, the analytic will be applied to that specific
-                room.</p
-              >
-              <p>
-                If the target entity type is Room and the followed entity is a
-                group of rooms, the analytic will be applied to all the rooms of
-                the group.</p
-              >
+        </configuration>
 
-              <p>
-                <strong> Currently selected node </strong>:
-                {{ !followedEntity ? 'None' : followedEntityName }}
-              </p>
-              <md-button @click="showSelectGroupEntityDialog = true">
-                Follow group entity
-              </md-button>
-
-              <md-button
-                v-if="!isGroupEntitySelected"
-                @click="showSelectSpatialEntityDialog = true"
-              >
-                Follow spatial entity
-              </md-button>
-            </div>
-
-            <link-to-entity
-              v-if="entityType"
-              :visible="showSelectGroupEntityDialog"
-              :entityType="
-                entityType.includes('Group') ? entityType : entityType + 'Group'
-              "
-              @closeSelection="closeSelectGroupEntityDialog"
-            />
-
-            <link-to-spatial-entity
-              v-if="entityType"
-              :visible="showSelectSpatialEntityDialog"
-              :entityType="entityType"
-              @closeSelection="closeSelectSpatialEntityDialog"
-            />
-          </md-content>
-        </md-step>
-
-        <!-- Tracking method -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.trackingMethod"
-          md-label="Tracking method"
-          :md-done.sync="stepper.third"
+        <summary-analytic
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          :analyticName="analyticName"
+          :trackingMethod="trackingMethod"
+          :filterValue="filterValue"
+          :followedEntity="followedEntity"
+          :algorithm="algorithm"
+          :algorithmParameters="algorithmParameters"
+          :resultName="resultName"
+          :resultType="resultType"
+          :intervalTime="intervalTime"
         >
-          <md-content class="">
-            <md-field class="fixed-size-field">
-              <label>Tracking Method</label>
-              <md-select v-model="trackingMethod">
-                <md-option
-                  v-for="data of CONST_TRACK_METHOD"
-                  :key="data"
-                  :value="data"
-                  >{{ data }}</md-option
-                >
-              </md-select>
-            </md-field>
-            <md-field class="fixed-size-field" v-if="trackingMethod != ''">
-              <label>Filter Value ( Case sensitive )</label>
-              <md-input v-model="filterValue"></md-input>
-            </md-field>
-            <md-button
-              class="md-primary"
-              :disabled="isPreviewDisabled"
-              @click="getPreviewData()"
-            >
-              Preview
-            </md-button>
-          </md-content>
-          <md-content class="contents md-scrollbar">
-            <div class="json-preview">
-              <pre>{{ prettyData }}</pre>
-            </div>
-          </md-content>
-        </md-step>
-
-        <!-- CONFIGURATION -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.config"
-          md-label="Configuration"
-          :md-done.sync="stepper.fourth"
-        >
-          <md-content class="contents md-scrollbar">
-            <md-field class="fixed-size-field">
-              <label>Algorithm</label>
-              <md-select v-model="algorithm">
-                <md-option
-                  v-for="data of CONST_ALGORITHMS"
-                  :key="data"
-                  :value="data"
-                  >{{ data }}</md-option
-                >
-              </md-select>
-            </md-field>
-
-            <!-- Algorithm Description -->
-            <div v-if="algorithm != ''">
-              <p>
-                <strong> Description : </strong>
-                {{ CONST_ALGO_DOC_DESCRIPTION[algorithm] }}</p
-              >
-            </div>
-
-            <!-- Algorithm Parameters -->
-            <div v-if="algorithm != ''">
-              <md-field
-                class="fixed-size-field"
-                v-for="(item, index) in algo_doc"
-                :key="index"
-              >
-                <label>{{ item.name }}, {{ item.description }}</label>
-                <md-input
-                  :type="item.type"
-                  v-model="algorithmParameters[index]"
-                ></md-input>
-              </md-field>
-            </div>
-
-            <md-field class="fixed-size-field">
-              <label>Result name</label>
-              <md-input v-model="resultName"></md-input>
-            </md-field>
-            <md-field class="fixed-size-field">
-              <label>Result type</label>
-              <md-select v-model="resultType">
-                <md-option
-                  v-for="data of CONST_ANALYTIC_RESULT_TYPE"
-                  :key="data"
-                  :value="data"
-                  >{{ data }}</md-option
-                >
-              </md-select>
-            </md-field>
-
-            <div v-if="resultType == CONST_ANALYTIC_RESULT_TYPE.TICKET">
-              <md-field class="fixed-size-field">
-                <label>Ticket/Alarm context id</label>
-                <md-input v-model="ticketContextId"></md-input>
-              </md-field>
-              <md-field class="fixed-size-field">
-                <label>Ticket/Alarm process id </label>
-                <md-input v-model="ticketProcessId"></md-input>
-              </md-field>
-            </div>
-
-            <md-field class="fixed-size-field">
-              <label
-                >Interval time (ms), 0 will make the analytic behave in COV
-                mode</label
-              >
-              <md-input type="number" v-model="intervalTime"></md-input>
-            </md-field>
-          </md-content>
-        </md-step>
-
-        <!-- RECAP -->
-        <md-step
-          class="mdStep"
-          :id="STEPPERS_DATA.recap"
-          md-label="Summary"
-          :md-done.sync="stepper.fifth"
-        >
-          <md-content class="contents md-scrollbar">
-            <div
-              v-for="(field, index) in summaryList"
-              :key="index"
-              class="summary-item"
-            >
-              <strong>{{ field.label }}:</strong>
-              {{ field.value === '' ? 'Missing !' : field.value }}
-            </div>
-          </md-content>
-        </md-step>
+        </summary-analytic>
       </md-steppers>
     </md-dialog-content>
 
@@ -250,46 +93,38 @@
 <script>
 import {
   spinalAnalyticService,
-  ENTITY_TYPES,
   CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
   CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
   CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
   CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
-  ALGORITHMS,
   ALGO_DOC,
-  ALGO_DOC_DESCRIPTION,
-  ANALYTIC_RESULT_TYPE,
-  TRACK_METHOD,
-  findControlEndpoints,
-  findEndpoints,
 } from 'spinal-model-analysis';
 
-import testDialogVue from './components/testDialog.vue';
-import linkToEntityVue from './components/linkToEntity.vue';
-import linkToSpatialEntityVue from './components/linkToSpatialEntity.vue';
-import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
+import analyticNameVue from './components/analyticSteps/analyticName.vue';
+import followedEntityVue from './components/analyticSteps/followedEntity.vue';
+import trackingMethodVue from './components/analyticSteps/trackingMethod.vue';
+import configurationVue from './components/analyticSteps/configuration.vue';
+import summaryVue from './components/analyticSteps/summary.vue';
 
 export default {
   name: 'createAnalyticDialog',
   props: ['onFinised'],
   components: {
-    'test-dialog': testDialogVue,
-    'link-to-entity': linkToEntityVue,
-    'link-to-spatial-entity': linkToSpatialEntityVue,
+    'analytic-name': analyticNameVue,
+    'followed-entity': followedEntityVue,
+    'tracking-method': trackingMethodVue,
+    'configuration': configurationVue,
+    'summary-analytic': summaryVue,
   },
   data() {
-    this.CONST_ALGORITHMS = ALGORITHMS;
-    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
-    this.CONST_TRACK_METHOD = TRACK_METHOD;
     this.CONST_ALGO_DOC = ALGO_DOC;
-    this.CONST_ALGO_DOC_DESCRIPTION = ALGO_DOC_DESCRIPTION;
     this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS =
       CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS;
     this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS =
       CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS;
     this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS =
       CATEGORY_ATTRIBUTE_RESULT_PARAMETERS;
-    this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS = 
+    this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS =
       CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS;
     this.STEPPERS_DATA = {
       analytic: 'first',
@@ -300,22 +135,26 @@ export default {
     };
     return {
       showDialog: true,
-      showSelectSpatialEntityDialog: false,
-      showSelectGroupEntityDialog: false,
+      showPreviewDialog: false,
       analyticName: '',
+
+      // Inputs related data
+      trackingMethod: '',
+      filterValue: '',
+      trackingIntervalTime: '',
+      followedEntity: undefined,
+
+      //Config related data
       algorithm: '',
       resultType: '',
       resultName: '',
       intervalTime: null,
       algorithmParameters: [],
-      trackingMethod: '',
-      filterValue: '',
-      followedEntity: undefined,
-      selectedNode: undefined,
-      entityType: undefined,
-      previewData: '',
       ticketContextId: '',
       ticketProcessId: '',
+
+      selectedNode: undefined,
+      entityType: undefined,
 
       stepper: {
         active: this.STEPPERS_DATA.analytic,
@@ -364,11 +203,13 @@ export default {
 
         //create trackingMethod Node
         const trackingMethodAttributes = {};
-        trackingMethodAttributes[this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS] =
-          [
-            { name: 'trackMethod', type: 'string', value: this.trackingMethod },
-            { name: 'filterValue', type: 'string', value: this.filterValue }
-          ];
+        trackingMethodAttributes[
+          this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+        ] = [
+          { name: 'trackMethod', type: 'string', value: this.trackingMethod },
+          { name: 'filterValue', type: 'string', value: this.filterValue },
+          { name: 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime},
+        ];
 
         const trackingMethodInfo =
           await spinalAnalyticService.addInputTrackingMethod(
@@ -387,14 +228,17 @@ export default {
 
         //create config Node
         const configAttributes = {};
-        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] =
-          [];
-        configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
-        ].push({ name: 'resultType', type: 'string', value: this.resultType });
-        configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
-        ].push({ name: 'resultName', type: 'string', value: this.resultName });
+        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] = [];
+        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS].push({
+          name: 'resultType',
+          type: 'string',
+          value: this.resultType,
+        });
+        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS].push({
+          name: 'resultName',
+          type: 'string',
+          value: this.resultName,
+        });
 
         const formattedAlgorithmParams = [];
         const doc = this.CONST_ALGO_DOC[this.algorithm];
@@ -458,27 +302,9 @@ export default {
       }
     },
 
-    closeSelectSpatialEntityDialog(selectedEntity) {
-      console.log('selected Entity :', selectedEntity);
-      this.followedEntity = selectedEntity;
-      console.log('this.followedEntity :', this.followedEntity); //!!
-      this.showSelectSpatialEntityDialog = false;
-    },
-
-    closeSelectGroupEntityDialog(selectedGroup) {
-      console.log('selected Entity :', selectedGroup);
-      this.followedEntity = selectedGroup;
-      this.showSelectGroupEntityDialog = false;
-    },
-
-    disabledButton() {
-      return false;
-    },
-
     changeStep(stepId) {
-      if (stepId === this.STEPPERS_DATA.analytic) {
-        this.stepper.active = stepId;
-      }
+      console.log('changeStep :', stepId)
+      this.stepper.active = stepId;
     },
 
     PassToNextStep() {
@@ -500,6 +326,8 @@ export default {
           this.stepper.active = this.STEPPERS_DATA.recap;
           break;
         case this.STEPPERS_DATA.recap:
+          this.stepper.fifth = true;
+          this.stepper.active = this.STEPPERS_DATA.recap;
           break;
       }
     },
@@ -517,114 +345,6 @@ export default {
       );
     },
 
-    async getPreviewData() {
-      const getCapturedInputs = async (entity) => {
-        const capturedInputs =
-          await spinalAnalyticService.applyTrackingMethodWithParams(
-            this.trackingMethod,
-            this.filterValue,
-            entity
-          );
-        return capturedInputs.map((input) => input.name.get());
-      };
-
-      const processSubEntities = async (
-        subEntities,
-        parentEntityName,
-        previewData
-      ) => {
-        for (const subEntity of subEntities) {
-          const subEntityName = subEntity.name.get();
-          const capturedInputs = await getCapturedInputs(subEntity);
-          previewData[parentEntityName][subEntityName] = capturedInputs;
-        }
-      };
-
-      console.log('Calling getPreviewData');
-
-      const followedEntityInfo = SpinalGraphService.getInfo(
-        this.followedEntity
-      );
-      const followedEntityName = followedEntityInfo.name.get();
-      const previewData = { [followedEntityName]: {} };
-
-      if (this.entityType === followedEntityInfo.type.get()) {
-        const capturedInputs = await getCapturedInputs(followedEntityInfo);
-        previewData[followedEntityName] = capturedInputs;
-      } else {
-        const isGroup = followedEntityInfo.type.get().includes('Group');
-        let subEntities;
-        if (isGroup) {
-          const relationNameToSubEntities = 'groupHas' + this.entityType;
-          subEntities = await SpinalGraphService.getChildren(
-            followedEntityInfo.id.get(),
-            [relationNameToSubEntities]
-          );
-        } else {
-          console.log('Getting sub entities through spatial context');
-          const spatialContextId =
-            SpinalGraphService.getContext('spatial').info.id.get();
-          subEntities = await SpinalGraphService.findInContextByType(
-            this.followedEntity,
-            spatialContextId,
-            this.entityType
-          );
-        }
-
-        await processSubEntities(subEntities, followedEntityName, previewData);
-      }
-
-      console.log('previewData :', previewData);
-      //this.previewData = JSON.stringify(previewData, null, 2);
-      this.previewData = previewData;
-    },
-  },
-
-  computed: {
-    algo_doc() {
-      return ALGO_DOC[this.algorithm];
-    },
-
-    isGroupEntitySelected() {
-      if (this.selectedNode === undefined) return false;
-      return this.entityType.includes('Group');
-    },
-
-    followedEntityName() {
-      if (!this.followedEntity) return '';
-      const info = SpinalGraphService.getInfo(this.followedEntity);
-      console.log(info);
-      return `${info.name.get()} | Type : ${info.type.get()} | Node id : ${info.id.get()}`;
-    },
-
-    isPreviewDisabled() {
-      return (
-        !this.followedEntity ||
-        this.trackingMethod === '' ||
-        this.filterValue === ''
-      );
-    },
-
-    summaryList() {
-      return [
-        { label: 'Analytic Name', value: this.analyticName },
-        { label: 'Tracking Method', value: this.trackingMethod },
-        { label: 'Filter Value', value: this.filterValue },
-        { label: 'Followed Entity', value: this.followedEntity },
-        { label: 'Algorithm', value: this.algorithm },
-        {
-          label: 'Algorithm Parameters',
-          value: JSON.stringify(this.algorithmParameters),
-        },
-        { label: 'Result Name', value: this.resultName },
-        { label: 'Result Type', value: this.resultType },
-        { label: 'Interval Time (ms)', value: this.intervalTime },
-      ];
-    },
-
-    prettyData() {
-      return JSON.stringify(this.previewData, null, 2);
-    },
   },
 };
 </script>
@@ -666,43 +386,22 @@ export default {
   padding: 10px 0px;
   overflow: hidden;
 }
-
-.mdDialog .mdDialogContainer .mdStep .contents {
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  overflow: auto;
-}
-
-.mdDialog .mdDialogContainer .mdStep .contents .summary-item {
-  padding: 8px 0;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.mdDialog .mdDialogContainer .mdStep .contents .summary-item strong {
-  margin-right: 8px;
-}
-
-.json-preview {
-  background-color: #1e1e1e;
-  border: 2px solid #3a3a3a;
-  border-radius: 8px;
-  padding: 20px;
-  color: #ffffff;
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.json-preview pre {
-  margin: 0;
-}
 </style>
 
 <style>
 .mdDialog .mdDialogContainer .mdStep .md-stepper-content.md-active {
   width: 100%;
   height: 100%;
+}
+.fixed-size-field {
+  width: 85%;
+  max-width: 85%;
+}
+
+.mdDialog .mdDialogContainer .mdStep .contents {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  overflow: auto;
 }
 </style>
