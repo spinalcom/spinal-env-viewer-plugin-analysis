@@ -44,7 +44,10 @@
 
       <md-field class="fixed-size-field">
         <label>Result name</label>
-        <md-input @change="updateResultName" v-model="localResultName"></md-input>
+        <md-input
+          @change="updateResultName"
+          v-model="localResultName"
+        ></md-input>
       </md-field>
       <md-field class="fixed-size-field">
         <label>Result type</label>
@@ -58,14 +61,20 @@
         </md-select>
       </md-field>
 
-      <div v-if="resultType == CONST_ANALYTIC_RESULT_TYPE.TICKET">
+      <div v-if="requireTicketLocalization">
         <md-field class="fixed-size-field">
           <label>Ticket/Alarm context id</label>
-          <md-input @change="updateTicketContextId" v-model="localTicketContextId"></md-input>
+          <md-input
+            @change="updateTicketContextId"
+            v-model="localTicketContextId"
+          ></md-input>
         </md-field>
         <md-field class="fixed-size-field">
           <label>Ticket/Alarm process id </label>
-          <md-input @change="updateTicketProcessId" v-model="localTicketProcessId"></md-input>
+          <md-input
+            @change="updateTicketProcessId"
+            v-model="localTicketProcessId"
+          ></md-input>
         </md-field>
       </div>
 
@@ -74,14 +83,23 @@
           >Interval time (ms), 0 will make the analytic behave in COV
           mode</label
         >
-        <md-input @change="updateIntervalTime" type="number" v-model="localIntervalTime"></md-input>
+        <md-input
+          @change="updateIntervalTime"
+          type="number"
+          v-model="localIntervalTime"
+        ></md-input>
       </md-field>
     </md-content>
   </md-step>
 </template>
 
 <script>
-import { ALGORITHMS, ANALYTIC_RESULT_TYPE ,ALGO_DOC, ALGO_DOC_DESCRIPTION } from 'spinal-model-analysis';
+import {
+  ALGORITHMS,
+  ANALYTIC_RESULT_TYPE,
+  ALGO_DOC,
+  ALGO_DOC_DESCRIPTION,
+} from 'spinal-model-analysis';
 
 export default {
   props: [
@@ -95,8 +113,7 @@ export default {
     'ticketContextId',
     'ticketProcessId',
   ],
-  components: {
-  },
+  components: {},
   data() {
     this.CONST_ALGORITHMS = ALGORITHMS;
     this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
@@ -114,7 +131,7 @@ export default {
   },
   methods: {
     updateAlgorithm() {
-      if(this.localAlgorithm != this.algorithm) {
+      if (this.localAlgorithm != this.algorithm) {
         this.localAlgorithmParameters = [];
       }
       this.$emit('update:algorithm', this.localAlgorithm);
@@ -137,13 +154,17 @@ export default {
     updateTicketProcessId() {
       this.$emit('update:ticketProcessId', this.localTicketProcessId);
     },
-
-
-    
   },
   computed: {
     algo_doc() {
       return ALGO_DOC[this.localAlgorithm];
+    },
+
+    requireTicketLocalization() {
+      return (
+        this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.TICKET ||
+        this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.ALARM
+      );
     },
   },
 
@@ -169,9 +190,6 @@ export default {
     ticketProcessId() {
       this.localTicketProcessId = this.ticketProcessId;
     },
-  }
+  },
 };
 </script>
-
-
-
