@@ -138,9 +138,6 @@ with this file. If not, see
 		text-align: center;
 	}
 
-	.mdDialogContainer .content {
-	}
-
 	/* .mdIcon {
   display: flex;
   align-items: center;

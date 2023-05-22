@@ -208,7 +208,7 @@ export default {
       this.intervalTime = configAlgoParams['intervalTime'];
       this.algorithmParameters = extractParams(configAlgoParams);
       this.resultType= configResultParams['resultType'];
-      if (this.resultType === this.CONST_ANALYTIC_RESULT_TYPE.TICKET){
+      if ([this.CONST_ANALYTIC_RESULT_TYPE.TICKET,this.CONST_ANALYTIC_RESULT_TYPE.ALARM].includes(this.resultType)){
         const configTicketParameters = await spinalAnalyticService.getAttributesFromNode(
           configNode.id.get(),
           this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
@@ -324,7 +324,6 @@ export default {
           formattedTicketAttributes);*/
         }
 
-        console.log('configAttributes :', configAttributes);
         const configNodeRef = await spinalAnalyticService.getConfig(
           this.selectedNode.id.get()
         );
@@ -356,7 +355,6 @@ export default {
     },
 
     changeStep(stepId) {
-      console.log('changeStep :', stepId)
       this.stepper.active = stepId;
     },
 

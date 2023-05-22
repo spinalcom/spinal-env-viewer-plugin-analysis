@@ -8,12 +8,12 @@
     <md-content class="contents md-scrollbar">
       <md-field class="fixed-size-field">
         <label>Algorithm</label>
-        <md-select @md-selected="updateAlgorithm" v-model="localAlgorithm">
+        <md-select @md-selected="update('algorithm',localAlgorithm)" v-model="localAlgorithm">
           <md-option
-            v-for="data of CONST_ALGORITHMS"
-            :key="data"
-            :value="data"
-            >{{ data }}</md-option
+            v-for="data of algo_names"
+            :key="data.name"
+            :value="data.name"
+            >{{ data.name }}</md-option
           >
         </md-select>
       </md-field>
@@ -22,7 +22,7 @@
       <div v-if="algorithm != ''">
         <p>
           <strong> Description : </strong>
-          {{ CONST_ALGO_DOC_DESCRIPTION[algorithm] }}</p
+          {{ algos[algorithm].description }}</p
         >
       </div>
 
@@ -30,12 +30,12 @@
       <div v-if="algorithm != ''">
         <md-field
           class="fixed-size-field"
-          v-for="(item, index) in algo_doc"
+          v-for="(item, index) in algos[algorithm].requiredParams"
           :key="index"
         >
           <label>{{ item.name }}, {{ item.description }}</label>
           <md-input
-            @change="updateAlgorithmParameters"
+            @change="update('algorithmParameters',localAlgorithmParameters)"
             :type="item.type"
             v-model="localAlgorithmParameters[index]"
           ></md-input>
@@ -45,13 +45,13 @@
       <md-field class="fixed-size-field">
         <label>Result name</label>
         <md-input
-          @change="updateResultName"
+          @change="update('resultName',localResultName)"
           v-model="localResultName"
         ></md-input>
       </md-field>
       <md-field class="fixed-size-field">
         <label>Result type</label>
-        <md-select @md-selected="updateResultType" v-model="localResultType">
+        <md-select @md-selected="update('resultType',localResultType)" v-model="localResultType">
           <md-option
             v-for="data of CONST_ANALYTIC_RESULT_TYPE"
             :key="data"
@@ -65,14 +65,14 @@
         <md-field class="fixed-size-field">
           <label>Ticket/Alarm context id</label>
           <md-input
-            @change="updateTicketContextId"
+           @change="update('ticketContextId',localTicketContextId)"
             v-model="localTicketContextId"
           ></md-input>
         </md-field>
         <md-field class="fixed-size-field">
           <label>Ticket/Alarm process id </label>
           <md-input
-            @change="updateTicketProcessId"
+            @change="update('ticketProcessId',localTicketProcessId)"
             v-model="localTicketProcessId"
           ></md-input>
         </md-field>
@@ -84,7 +84,7 @@
           mode</label
         >
         <md-input
-          @change="updateIntervalTime"
+          @change="update('intervalTime',localIntervalTime)"
           type="number"
           v-model="localIntervalTime"
         ></md-input>
@@ -95,10 +95,8 @@
 
 <script>
 import {
-  ALGORITHMS,
   ANALYTIC_RESULT_TYPE,
-  ALGO_DOC,
-  ALGO_DOC_DESCRIPTION,
+  algos
 } from 'spinal-model-analysis';
 
 export default {
@@ -115,10 +113,6 @@ export default {
   ],
   components: {},
   data() {
-    this.CONST_ALGORITHMS = ALGORITHMS;
-    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
-    this.CONST_ALGO_DOC = ALGO_DOC;
-    this.CONST_ALGO_DOC_DESCRIPTION = ALGO_DOC_DESCRIPTION;
     return {
       localAlgorithm: this.algorithm,
       localAlgorithmParameters: this.algorithmParameters,
@@ -129,41 +123,28 @@ export default {
       localTicketProcessId: this.ticketProcessId,
     };
   },
+  created(){
+    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
+  },
   methods: {
-    updateAlgorithm() {
-      if (this.localAlgorithm != this.algorithm) {
-        this.localAlgorithmParameters = [];
+    update(key, value) {
+      if (key == 'algorithm' && this.algorithm != value){
+        this.update('algorithmParameters', [])
       }
-      this.$emit('update:algorithm', this.localAlgorithm);
-    },
-    updateAlgorithmParameters() {
-      this.$emit('update:algorithmParameters', this.localAlgorithmParameters);
-    },
-    updateIntervalTime() {
-      this.$emit('update:intervalTime', this.localIntervalTime);
-    },
-    updateResultName() {
-      this.$emit('update:resultName', this.localResultName);
-    },
-    updateResultType() {
-      this.$emit('update:resultType', this.localResultType);
-    },
-    updateTicketContextId() {
-      this.$emit('update:ticketContextId', this.localTicketContextId);
-    },
-    updateTicketProcessId() {
-      this.$emit('update:ticketProcessId', this.localTicketProcessId);
+      this.$emit(`update:${key}`, value);
     },
   },
   computed: {
-    algo_doc() {
-      return ALGO_DOC[this.localAlgorithm];
+    algo_names() {
+      return Object.values(algos);
+    },
+    algos() {
+      return algos;
     },
 
     requireTicketLocalization() {
       return (
-        this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.TICKET ||
-        this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.ALARM
+        [this.CONST_ANALYTIC_RESULT_TYPE.TICKET, this.CONST_ANALYTIC_RESULT_TYPE.ALARM].includes(this.localResultType)
       );
     },
   },
