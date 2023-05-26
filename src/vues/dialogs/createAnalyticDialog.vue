@@ -97,7 +97,7 @@ import {
   CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
   CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
   CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
-  ALGO_DOC,
+  algos,
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
@@ -117,7 +117,6 @@ export default {
     'summary-analytic': summaryVue,
   },
   data() {
-    this.CONST_ALGO_DOC = ALGO_DOC;
     this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS =
       CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS;
     this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS =
@@ -133,6 +132,7 @@ export default {
       config: 'fourth',
       recap: 'fifth',
     };
+
     return {
       showDialog: true,
       showPreviewDialog: false,
@@ -241,7 +241,7 @@ export default {
         });
 
         const formattedAlgorithmParams = [];
-        const doc = this.CONST_ALGO_DOC[this.algorithm];
+        const doc = algos[this.algorithm].requiredParams;
         for (let i = 0; i < this.algorithmParameters.length; i++) {
           const paramValue = this.algorithmParameters[i];
           formattedAlgorithmParams.push({
