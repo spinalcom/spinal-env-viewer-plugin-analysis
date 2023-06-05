@@ -6,21 +6,48 @@
     :md-done.sync="stepper.third"
   >
     <md-content class="contents md-scrollbar">
+      <p>Each tracking method is an input for the algorithm</p>
+      <div v-for="(tracking, index) in localTrackingMethods" :key="index" class="trackingMethodBlock">
+      <b>Tracking Method {{index+1}}</b>
       <md-field class="fixed-size-field">
         <label>Tracking Method</label>
-        <md-select @md-selected="updateTrackingMethod" v-model="localTrackingMethod">
+        <md-select v-model="tracking.trackingMethod">
           <md-option
             v-for="data of CONST_TRACK_METHOD"
             :key="data"
             :value="data"
-            >{{ data }}</md-option
+          >{{ data }}</md-option
           >
         </md-select>
       </md-field>
-      <md-field class="fixed-size-field"  v-if="trackingMethod != ''">
+      <md-field class="fixed-size-field"  v-if="tracking.trackingMethod != ''">
         <label>Filter Value ( Case sensitive )</label>
-        <md-input @change="updateFilterValue" v-model="localFilterValue"></md-input>
+        <md-input v-model="tracking.filterValue"></md-input>
       </md-field>
+      <md-button
+        class="md-primary"
+        :disabled="isPreviewDisabled(tracking)"
+        @click="getPreviewData(tracking)"
+      >
+        Preview input
+      </md-button>
+      <md-button
+        class="md-accent"
+        @click="removeTrackingMethod(index)">
+        Remove
+      </md-button>
+
+    </div>
+
+    <md-button
+      class="md-primary"
+      @click="addTrackingMethod"
+    >
+      Add Tracking Method
+    </md-button>
+
+    
+
       <md-field class="fixed-size-field">
         <label> Timeseries interval time (ms) </label>
         <md-input type="number" @change="updateTrackingIntervalTime" v-model="localTrackingIntervalTime"></md-input>
@@ -34,10 +61,10 @@
       </p>
       <md-button
         class="md-primary"
-        :disabled="isPreviewDisabled"
-        @click="getPreviewData()"
+        :disabled="isGlobalPreviewDisabled"
+        @click="getGlobalPreviewData()"
       >
-        Preview
+        Preview All inputs
       </md-button>
     </md-content>
     <preview-dialog
@@ -55,16 +82,15 @@ import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 import previewDialogVue from '../previewDialog.vue';
 
 export default {
-  props: ['STEPPERS_DATA', 'stepper','entityType','followedEntity',
-  'trackingMethod', 'filterValue', 'trackingIntervalTime' ],
+  props: ['STEPPERS_DATA', 'stepper','entityType','followedEntity'
+  ,'trackingMethods', 'trackingIntervalTime' ],
   components: {
     'preview-dialog': previewDialogVue,
   },
   data() {
     this.CONST_TRACK_METHOD = TRACK_METHOD;
     return {
-        localTrackingMethod: this.trackingMethod,
-        localFilterValue: this.filterValue,
+        localTrackingMethods : this.trackingMethods,
         localTrackingIntervalTime: this.trackingIntervalTime,
         showPreviewDialog:false,
         previewData: '',
@@ -72,25 +98,29 @@ export default {
     };
   },
   methods: {
-    updateTrackingMethod() {
-      this.$emit('update:trackingMethod', this.localTrackingMethod);
-    },
-    updateFilterValue() {
-      this.$emit('update:filterValue', this.localFilterValue);
-    },
     updateTrackingIntervalTime() {
       this.$emit('update:trackingIntervalTime', this.localTrackingIntervalTime);
     },
-    async getPreviewData() {
+    updateTrackingMethods() {
+      this.$emit('update:trackingMethods', this.localTrackingMethods);
+    },
+    addTrackingMethod() {
+      this.$emit('addTrackingMethod');
+    },
+    removeTrackingMethod(index){
+      this.$emit('removeTrackingMethod',index);
+    },
+
+    async getPreviewData(tracking) {
       this.showPreviewDialog = true;
       const getCapturedInputs = async (entity) => {
-        const capturedInputs =
+        const capturedInput =
           await spinalAnalyticService.applyTrackingMethodWithParams(
-            this.trackingMethod,
-            this.filterValue,
+            tracking.trackingMethod,
+            tracking.filterValue,
             entity
           );
-        return capturedInputs.map((input) => input.name.get());
+        return capturedInput.name.get();
       };
 
       const processSubEntities = async (
@@ -147,16 +177,21 @@ export default {
     closePreviewDialog(){
       this.showPreviewDialog = false;
     },
+    isPreviewDisabled(tracking) {
+      return (
+        !this.followedEntity ||
+        tracking.trackingMethod === '' ||
+        tracking.filterValue === ''
+      );
+    },
 
   },
   computed: {
-    isPreviewDisabled() {
+    isGlobalPreviewDisabled() {
       return (
-        !this.followedEntity ||
-        this.trackingMethod === '' ||
-        this.filterValue === ''
-      );
+        true);
     },
+    
 
     followedEntityName() {
       if (!this.followedEntity) return '';
@@ -178,7 +213,22 @@ export default {
     },
     trackingIntervalTime(){
       this.localTrackingIntervalTime = this.trackingIntervalTime;
+    },
+    trackingMethods(){
+      this.localTrackingMethods = this.trackingMethods;
     }
   }
 };
 </script>
+
+<style scoped>
+.trackingMethodBlock {
+  border: 2px dashed #ffffff;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+}
+
+
+</style>
+

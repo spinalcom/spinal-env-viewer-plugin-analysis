@@ -32,8 +32,9 @@
           :stepper="stepper"
           :entityType="entityType"
           :followedEntity="followedEntity"
-          v-bind:trackingMethod.sync="trackingMethod"
-          v-bind:filterValue.sync="filterValue"
+          @addTrackingMethod="addTrackingMethod"
+          @removeTrackingMethod="removeTrackingMethod"
+          v-bind:trackingMethods.sync="trackingMethods"
           v-bind:trackingIntervalTime.sync="trackingIntervalTime"
         >
         </tracking-method>
@@ -48,6 +49,7 @@
           v-bind:intervalTime.sync="intervalTime"
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
+          v-bind:alarmPriority.sync="alarmPriority"
         >
         </configuration>
 
@@ -55,8 +57,7 @@
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :analyticName="analyticName"
-          :trackingMethod="trackingMethod"
-          :filterValue="filterValue"
+          :trackingMethods="trackingMethods"
           :followedEntity="followedEntity"
           :algorithm="algorithm"
           :algorithmParameters="algorithmParameters"
@@ -139,8 +140,7 @@ export default {
       analyticName: '',
 
       // Inputs related data
-      trackingMethod: '',
-      filterValue: '',
+      trackingMethods: [{ trackingMethod: '', filterValue: '' }],
       trackingIntervalTime: '',
       followedEntity: undefined,
 
@@ -152,6 +152,7 @@ export default {
       algorithmParameters: [],
       ticketContextId: '',
       ticketProcessId: '',
+      alarmPriority: null,
 
       selectedNode: undefined,
       entityType: undefined,
@@ -174,18 +175,6 @@ export default {
 
     async removed(res) {
       if (res.closeResult) {
-        /*console.log({
-          entity: this.selectedNode,
-          Analytic_name: this.analyticName,
-          algorithm: this.algorithm,
-          resultType: this.resultType,
-          resultName: this.resultName,
-          intervalTime: this.intervalTime,
-          algorithmParameters: this.algorithmParameters,
-          trackingMethod: this.trackingMethod,
-          filterValue: this.filterValue,
-          followedEntity: this.followedEntity,
-        })*/
 
         // there must be a better way to get the context id...
         const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
@@ -205,12 +194,17 @@ export default {
         const trackingMethodAttributes = {};
         trackingMethodAttributes[
           this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-        ] = [
-          { name: 'trackMethod', type: 'string', value: this.trackingMethod },
-          { name: 'filterValue', type: 'string', value: this.filterValue },
-          { name: 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime},
-        ];
+        ] = [{name : 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime}];
 
+        for(let i = 0; i < this.trackingMethods.length; i++){
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'trackingMethod'+i, type: 'string', value: this.trackingMethods[i].trackingMethod });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'filterValue'+i, type: 'string', value: this.trackingMethods[i].filterValue });
+        }
+        
         const trackingMethodInfo =
           await spinalAnalyticService.addInputTrackingMethod(
             trackingMethodAttributes,
@@ -239,7 +233,6 @@ export default {
           type: 'string',
           value: this.resultName,
         });
-
         const formattedAlgorithmParams = [];
         const doc = algos[this.algorithm].requiredParams;
         for (let i = 0; i < this.algorithmParameters.length; i++) {
@@ -275,12 +268,18 @@ export default {
             value: this.ticketProcessId,
             type: 'string',
           });
-
+        
+        if(this.alarmPriority){
+          formattedTicketAttributes.push({
+            name: 'alarmPriority',
+            value: this.alarmPriority,
+            type: 'number',
+          });
+        }
           configAttributes[
             this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
           ] = formattedTicketAttributes;
-          /*await spinalAnalyticService.addAttributesToConfig(configInfo.id.get(),this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
-          formattedTicketAttributes);*/
+  
         }
         console.log('configAttributes :', configAttributes);
         const configInfo = await spinalAnalyticService.addConfig(
@@ -302,6 +301,12 @@ export default {
       }
     },
 
+    addTrackingMethod() {
+      this.trackingMethods.push({ trackingMethod: '', filterValue: '' });
+    },
+    removeTrackingMethod(index) {
+      this.trackingMethods.splice(index, 1);
+    },
     changeStep(stepId) {
       console.log('changeStep :', stepId)
       this.stepper.active = stepId;
@@ -339,8 +344,6 @@ export default {
         this.resultType === '' ||
         this.resultName === '' ||
         this.intervalTime === null ||
-        this.trackingMethod === '' ||
-        this.filterValue === '' ||
         !this.followedEntity
       );
     },

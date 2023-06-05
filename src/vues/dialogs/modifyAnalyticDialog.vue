@@ -32,8 +32,9 @@
           :stepper="stepper"
           :entityType="entityType"
           :followedEntity="followedEntity"
-          v-bind:trackingMethod.sync="trackingMethod"
-          v-bind:filterValue.sync="filterValue"
+          @addTrackingMethod="addTrackingMethod"
+          @removeTrackingMethod="removeTrackingMethod"
+          v-bind:trackingMethods.sync="trackingMethods"
           v-bind:trackingIntervalTime.sync="trackingIntervalTime"
         >
         </tracking-method>
@@ -48,6 +49,7 @@
           v-bind:intervalTime.sync="intervalTime"
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
+          v-bind:alarmPriority.sync="alarmPriority"
         >
         </configuration>
 
@@ -55,9 +57,7 @@
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :analyticName="analyticName"
-          :trackingMethod="trackingMethod"
-          :filterValue="filterValue"
-          :followedEntity="followedEntity"
+          :trackingMethods="trackingMethods"
           :algorithm="algorithm"
           :algorithmParameters="algorithmParameters"
           :resultName="resultName"
@@ -141,8 +141,7 @@ export default {
       analyticName: '',
 
       // Inputs related data
-      trackingMethod: '',
-      filterValue: '',
+      trackingMethods: [],
       trackingIntervalTime: '',
       followedEntity: undefined,
 
@@ -154,6 +153,7 @@ export default {
       algorithmParameters: [],
       ticketContextId: '',
       ticketProcessId: '',
+      alarmPriority : null,
 
       selectedNode: undefined,
       entityType: undefined,
@@ -214,27 +214,21 @@ export default {
         );
         this.ticketContextId = configTicketParameters['ticketContextId'];
         this.ticketProcessId = configTicketParameters['ticketProcessId'];
+        if(this.resultType === this.CONST_ANALYTIC_RESULT_TYPE.ALARM){
+
+          this.alarmPriority = configTicketParameters['alarmPriority'];
+        }
       }
       this.resultName = configResultParams['resultName'];
-      this.trackingMethod= trackingParams['trackMethod'];
-      this.filterValue= trackingParams['filterValue'];
+      console.log("TRACKING PARAMS ",trackingParams);
+
+      this.trackingMethods= this.formatTrackingMethodsToList(trackingParams);
+      console.log("TRACKING METHODS ",this.trackingMethods);
       this.trackingIntervalTime = trackingParams['trackingIntervalTime'];
     },
 
     async removed(res) {
       if (res.closeResult) {
-        /*console.log({
-          entity: this.selectedNode,
-          Analytic_name: this.analyticName,
-          algorithm: this.algorithm,
-          resultType: this.resultType,
-          resultName: this.resultName,
-          intervalTime: this.intervalTime,
-          algorithmParameters: this.algorithmParameters,
-          trackingMethod: this.trackingMethod,
-          filterValue: this.filterValue,
-          followedEntity: this.followedEntity,
-        })*/
 
         // there must be a better way to get the context id...
         const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
@@ -248,12 +242,18 @@ export default {
           await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,this.selectedNode.id.get(), this.followedEntity);
         }
         const trackingMethodAttributes = {};
-        trackingMethodAttributes[this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS] =
-          [
-            { name: 'trackMethod', type: 'string', value: this.trackingMethod },
-            { name: 'filterValue', type: 'string', value: this.filterValue },
-            { name: 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime}
-          ];
+        trackingMethodAttributes[
+          this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+        ] = [{name : 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime}];
+        for(let i = 0; i < this.trackingMethods.length; i++){
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'trackingMethod'+i, type: 'string', value: this.trackingMethods[i].trackingMethod });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'filterValue'+i, type: 'string', value: this.trackingMethods[i].filterValue });
+        }
+        
         const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(
           this.selectedNode.id.get(),
         );
@@ -353,6 +353,28 @@ export default {
       return false;
     },
 
+    formatTrackingMethodsToList(obj) {
+    let result = [];
+    let keys = Object.keys(obj);
+    let length = (keys.length-1) / 2;  // Assuming every filterValue has a corresponding trackMethod
+
+    for (let i = 0; i < length; i++) {
+        let item = {
+            trackingMethod: obj[`trackingMethod${i}`],
+            filterValue: obj[`filterValue${i}`]
+        };
+        result.push(item);
+    }
+
+    return result;
+    },
+
+    addTrackingMethod() {
+      this.trackingMethods.push({ trackingMethod: '', filterValue: '' });
+    },
+    removeTrackingMethod(index) {
+      this.trackingMethods.splice(index, 1);
+    },
     changeStep(stepId) {
       this.stepper.active = stepId;
     },

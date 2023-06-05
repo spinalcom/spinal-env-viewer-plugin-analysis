@@ -76,6 +76,14 @@
             v-model="localTicketProcessId"
           ></md-input>
         </md-field>
+        <md-field class="fixed-size-field">
+          <label> Alarm priority </label>
+          <md-input
+            type="number"
+            @change="update('alarmPriority',localAlarmPriority)"
+            v-model="localAlarmPriority"
+          ></md-input>
+        </md-field>
       </div>
 
       <md-field class="fixed-size-field">
@@ -110,6 +118,7 @@ export default {
     'intervalTime',
     'ticketContextId',
     'ticketProcessId',
+    'alarmPriority'
   ],
   components: {},
   data() {
@@ -121,6 +130,7 @@ export default {
       localIntervalTime: this.intervalTime,
       localTicketContextId: this.ticketContextId,
       localTicketProcessId: this.ticketProcessId,
+      localAlarmPriority: this.alarmPriority,
     };
   },
   created(){
@@ -147,6 +157,10 @@ export default {
         [this.CONST_ANALYTIC_RESULT_TYPE.TICKET, this.CONST_ANALYTIC_RESULT_TYPE.ALARM].includes(this.localResultType)
       );
     },
+
+    requireAlarmPriority(){
+      return this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.ALARM
+    }
   },
 
   watch: {
@@ -170,6 +184,9 @@ export default {
     },
     ticketProcessId() {
       this.localTicketProcessId = this.ticketProcessId;
+    },
+    alarmPriority() {
+      this.localAlarmPriority = this.alarmPriority;
     },
   },
 };

@@ -29,8 +29,7 @@ export default {
     'STEPPERS_DATA',
     'stepper',
     'analyticName',
-    'trackingMethod',
-    'filterValue',
+    'trackingMethods',
     'followedEntity',
     'algorithm',
     'algorithmParameters',
@@ -49,8 +48,7 @@ export default {
     summaryList() {
       return [
         { label: 'Analytic Name', value: this.analyticName },
-        { label: 'Tracking Method', value: this.trackingMethod },
-        { label: 'Filter Value', value: this.filterValue },
+        { label: 'Tracking Methods', value: JSON.stringify(this.trackingMethods) },
         { label: 'Followed Entity', value: this.followedEntity },
         { label: 'Algorithm', value: this.algorithm },
         {
