@@ -28,18 +28,63 @@
 
       <!-- Algorithm Parameters -->
       <div v-if="algorithm != ''">
-        <md-field
+        <div v-if="algos[algorithm].requiredParams == 'boolean'">
+          <div
           class="fixed-size-field"
-          v-for="(item, index) in algos[algorithm].requiredParams"
+          v-for="(item, index) of inputs"
           :key="index"
         >
-          <label>{{ item.name }}, {{ item.description }}</label>
-          <md-input
-            @change="update('algorithmParameters',localAlgorithmParameters)"
-            :type="item.type"
-            v-model="localAlgorithmParameters[index]"
-          ></md-input>
-        </md-field>
+          <label> {{ index }} </label>
+          <md-radio value="false">
+            False
+          </md-radio>
+          <md-radio value="true">
+            True
+          </md-radio>
+        </div>
+        </div>
+        <div v-else-if="algos[algorithm].requiredParams == 'number'">
+          <md-field
+            class="fixed-size-field"
+            v-for="(item, index) of inputs"
+            :key="index"
+          >
+            <label> {{ index }} </label>
+            <md-input
+              @change="update('algorithmParameters',localAlgorithmParameters)"
+              type="number"
+              v-model="localAlgorithmParameters[index]"
+            ></md-input>
+          </md-field>
+        </div>
+        <div v-else-if="algos[algorithm].requiredParams == 'string'">
+          <md-field
+            class="fixed-size-field"
+            v-for="(item, index) of inputs"
+            :key="index"
+          >
+            <label> {{ index }} </label>
+            <md-input
+              @change="update('algorithmParameters',localAlgorithmParameters)"
+              v-model="localAlgorithmParameters[index]"
+            ></md-input>
+          </md-field>
+        </div>
+
+        <div v-else>
+          <md-field
+            class="fixed-size-field"
+            v-for="(item, index) in algos[algorithm].requiredParams"
+            :key="index"
+          >
+            <label>{{ item.name }}, {{ item.description }}</label>
+            <md-input
+              @change="update('algorithmParameters',localAlgorithmParameters)"
+              :type="item.type"
+              v-model="localAlgorithmParameters[index]"
+            ></md-input>
+          </md-field>
+        </div>
       </div>
 
       <md-field class="fixed-size-field">
@@ -97,6 +142,9 @@
           v-model="localIntervalTime"
         ></md-input>
       </md-field>
+
+      <md-switch v-model="localTriggerAtStart"> Trigger instantly when organs starts </md-switch>
+
     </md-content>
   </md-step>
 </template>
@@ -111,6 +159,7 @@ export default {
   props: [
     'STEPPERS_DATA',
     'stepper',
+    'inputs',
     'algorithm',
     'algorithmParameters',
     'resultName',
@@ -118,7 +167,8 @@ export default {
     'intervalTime',
     'ticketContextId',
     'ticketProcessId',
-    'alarmPriority'
+    'alarmPriority',
+    'triggerAtStart'
   ],
   components: {},
   data() {
@@ -131,6 +181,7 @@ export default {
       localTicketContextId: this.ticketContextId,
       localTicketProcessId: this.ticketProcessId,
       localAlarmPriority: this.alarmPriority,
+      localTriggerAtStart: this.triggerAtStart,
     };
   },
   created(){
@@ -187,6 +238,9 @@ export default {
     },
     alarmPriority() {
       this.localAlarmPriority = this.alarmPriority;
+    },
+    triggerAtStart() {
+      this.localTriggerAtStart = this.triggerAtStart;
     },
   },
 };

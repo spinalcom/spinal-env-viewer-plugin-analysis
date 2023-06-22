@@ -42,6 +42,7 @@
         <configuration
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
+          :inputs="trackingMethods"
           v-bind:algorithm.sync="algorithm"
           v-bind:algorithmParameters.sync="algorithmParameters"
           v-bind:resultName.sync="resultName"
@@ -50,6 +51,7 @@
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
           v-bind:alarmPriority.sync="alarmPriority"
+          v-bind:triggerAtStart.sync="triggerAtStart"
         >
         </configuration>
 
@@ -140,7 +142,7 @@ export default {
       analyticName: '',
 
       // Inputs related data
-      trackingMethods: [{ trackingMethod: '', filterValue: '' }],
+      trackingMethods: [{ trackingMethod: '', filterValue: '', removeFromAnalysis: false }],
       trackingIntervalTime: '',
       followedEntity: undefined,
 
@@ -153,6 +155,8 @@ export default {
       ticketContextId: '',
       ticketProcessId: '',
       alarmPriority: null,
+      triggerAtStart:false,
+
 
       selectedNode: undefined,
       entityType: undefined,
@@ -203,7 +207,15 @@ export default {
           trackingMethodAttributes[
             this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
           ].push({ name: 'filterValue'+i, type: 'string', value: this.trackingMethods[i].filterValue });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'removeFromAnalysis'+i, type: 'boolean', value: this.trackingMethods[i].removeFromAnalysis });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'removeFromBinding'+i, type: 'boolean', value: this.trackingMethods[i].removeFromBinding });
         }
+        
+        console.log('trackingMethodAttributes :', trackingMethodAttributes);
         
         const trackingMethodInfo =
           await spinalAnalyticService.addInputTrackingMethod(
@@ -255,6 +267,13 @@ export default {
           type: 'number',
           value: this.intervalTime,
         });
+        configAttributes[
+          this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
+        ].push({
+          name: 'triggerAtStart',
+          type: 'boolean',
+          value: this.triggerAtStart,
+        });
 
         if (this.ticketContextId && this.ticketProcessId) {
           const formattedTicketAttributes = [];
@@ -302,7 +321,7 @@ export default {
     },
 
     addTrackingMethod() {
-      this.trackingMethods.push({ trackingMethod: '', filterValue: '' });
+      this.trackingMethods.push({ trackingMethod: '', filterValue: '', removeFromAnalysis: false, removeFromBinding: false });
     },
     removeTrackingMethod(index) {
       this.trackingMethods.splice(index, 1);

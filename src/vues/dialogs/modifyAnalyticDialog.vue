@@ -50,6 +50,7 @@
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
           v-bind:alarmPriority.sync="alarmPriority"
+          v-bind:triggerAtStart.sync="triggerAtStart"
         >
         </configuration>
 
@@ -154,6 +155,7 @@ export default {
       ticketContextId: '',
       ticketProcessId: '',
       alarmPriority : null,
+      triggerAtStart:false,
 
       selectedNode: undefined,
       entityType: undefined,
@@ -205,6 +207,7 @@ export default {
 
       this.algorithm = configAlgoParams['algorithm'];
       this.intervalTime = configAlgoParams['intervalTime'];
+      this.triggerAtStart = configAlgoParams['triggerAtStart'];
       this.algorithmParameters = extractParams(configAlgoParams);
       this.resultType= configResultParams['resultType'];
       if ([this.CONST_ANALYTIC_RESULT_TYPE.TICKET,this.CONST_ANALYTIC_RESULT_TYPE.ALARM].includes(this.resultType)){
@@ -215,7 +218,6 @@ export default {
         this.ticketContextId = configTicketParameters['ticketContextId'];
         this.ticketProcessId = configTicketParameters['ticketProcessId'];
         if(this.resultType === this.CONST_ANALYTIC_RESULT_TYPE.ALARM){
-
           this.alarmPriority = configTicketParameters['alarmPriority'];
         }
       }
@@ -252,6 +254,13 @@ export default {
           trackingMethodAttributes[
             this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
           ].push({ name: 'filterValue'+i, type: 'string', value: this.trackingMethods[i].filterValue });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'removeFromAnalysis'+i, type: 'boolean', value: this.trackingMethods[i].removeFromAnalysis });
+          trackingMethodAttributes[
+            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
+          ].push({ name: 'removeFromBinding'+i, type: 'boolean', value: this.trackingMethods[i].removeFromBinding });
+
         }
         
         const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(
@@ -301,6 +310,13 @@ export default {
           name: 'intervalTime',
           type: 'number',
           value: this.intervalTime,
+        });
+        configAttributes[
+          this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
+        ].push({
+          name: 'triggerAtStart',
+          type: 'boolean',
+          value: this.triggerAtStart,
         });
 
         if (this.ticketContextId && this.ticketProcessId) {
@@ -356,12 +372,14 @@ export default {
     formatTrackingMethodsToList(obj) {
     let result = [];
     let keys = Object.keys(obj);
-    let length = (keys.length-1) / 2;  // Assuming every filterValue has a corresponding trackMethod
+    let length = (keys.length-1) / 4;
 
     for (let i = 0; i < length; i++) {
         let item = {
             trackingMethod: obj[`trackingMethod${i}`],
-            filterValue: obj[`filterValue${i}`]
+            filterValue: obj[`filterValue${i}`],
+            removeFromAnalysis: obj[`removeFromAnalysis${i}`],
+            removeFromBinding: obj[`removeFromBinding${i}`]
         };
         result.push(item);
     }
@@ -370,7 +388,7 @@ export default {
     },
 
     addTrackingMethod() {
-      this.trackingMethods.push({ trackingMethod: '', filterValue: '' });
+      this.trackingMethods.push({ trackingMethod: '', filterValue: '', removeFromAnalysis: false, removeFromBinding: false });
     },
     removeTrackingMethod(index) {
       this.trackingMethods.splice(index, 1);

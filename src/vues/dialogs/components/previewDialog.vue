@@ -50,7 +50,7 @@ export default {
 }
 .content {
   max-height: 400px;
-  width: 500px;
+  width: 700px;
   overflow-y: auto;
 }
 .json-preview {

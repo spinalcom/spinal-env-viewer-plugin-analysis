@@ -20,10 +20,23 @@
           >
         </md-select>
       </md-field>
+      <md-button
+        class="md-primary"
+        :disabled="isShowAvailableDataDisabled(tracking)"
+        @click="getPreviewData(tracking)"
+      >
+        Show available data
+      </md-button>
       <md-field class="fixed-size-field"  v-if="tracking.trackingMethod != ''">
         <label>Filter Value ( Case sensitive )</label>
         <md-input v-model="tracking.filterValue"></md-input>
       </md-field>
+
+      <md-switch v-model="tracking.removeFromAnalysis"> Algorithm should ignore this input </md-switch>
+      <md-switch v-model="tracking.removeFromBinding"> Binding process should ignore this input </md-switch>
+
+
+
       <md-button
         class="md-primary"
         :disabled="isPreviewDisabled(tracking)"
@@ -111,40 +124,39 @@ export default {
       this.$emit('removeTrackingMethod',index);
     },
 
-    async getPreviewData(tracking) {
-      this.showPreviewDialog = true;
-      const getCapturedInputs = async (entity) => {
-        const capturedInput =
+    async getCapturedInputs(tracking,entity){
+      const capturedInput =
           await spinalAnalyticService.applyTrackingMethodWithParams(
             tracking.trackingMethod,
             tracking.filterValue,
             entity
           );
+        if (!capturedInput) return "!! Not found !!";
+        if(Array.isArray(capturedInput)) return capturedInput.map(el => el.name.get());
         return capturedInput.name.get();
-      };
+    },
 
-      const processSubEntities = async (
-        subEntities,
-        parentEntityName,
-        previewData
-      ) => {
-        for (const subEntity of subEntities) {
-          const subEntityName = subEntity.name.get();
-          const capturedInputs = await getCapturedInputs(subEntity);
+    async updatePreviewData(tracking,subEntities,parentEntityName,previewData){
+          for (const subEntity of subEntities) {
+          let subEntityName = subEntity.name.get();
+          subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
+          const capturedInputs = await this.getCapturedInputs(tracking,subEntity);
           previewData[parentEntityName][subEntityName] = capturedInputs;
         }
-      };
-
+        },
+    async getPreviewData(tracking) {
+      this.showPreviewDialog = true;
+      this.previewData = '';
       console.log('Calling getPreviewData');
 
       const followedEntityInfo = SpinalGraphService.getInfo(
         this.followedEntity
       );
-      const followedEntityName = followedEntityInfo.name.get();
+      let followedEntityName = followedEntityInfo.name.get();
+      followedEntityName = followedEntityName.replace(/(\r\n|\n|\r)/gm, "");
       const previewData = { [followedEntityName]: {} };
-
       if (this.entityType === followedEntityInfo.type.get()) {
-        const capturedInputs = await getCapturedInputs(followedEntityInfo);
+        const capturedInputs = await this.getCapturedInputs(tracking,followedEntityInfo);
         previewData[followedEntityName] = capturedInputs;
       } else {
         const isGroup = followedEntityInfo.type.get().includes('Group');
@@ -159,14 +171,14 @@ export default {
           console.log('Getting sub entities through spatial context');
           const spatialContextId =
             SpinalGraphService.getContext('spatial').info.id.get();
-          subEntities = await SpinalGraphService.findInContextByType(
+            subEntities = await SpinalGraphService.findInContextByType(
             this.followedEntity,
             spatialContextId,
             this.entityType
           );
         }
 
-        await processSubEntities(subEntities, followedEntityName, previewData);
+        await this.updatePreviewData(tracking,subEntities, followedEntityName, previewData);
       }
 
       console.log('previewData :', previewData);
@@ -174,14 +186,21 @@ export default {
       this.previewData = previewData;
     },
 
+
     closePreviewDialog(){
       this.showPreviewDialog = false;
     },
     isPreviewDisabled(tracking) {
       return (
         !this.followedEntity ||
-        tracking.trackingMethod === '' ||
-        tracking.filterValue === ''
+        tracking.trackingMethod === ''
+        || tracking.filterValue === ''
+      );
+    },
+    isShowAvailableDataDisabled(tracking) {
+      return (
+        !this.followedEntity ||
+        tracking.trackingMethod === ''
       );
     },
 
@@ -205,9 +224,7 @@ export default {
   },
 
   watch:{
-    trackingMethod(){
-      this.localTrackingMethod = this.trackingMethod;
-    },
+
     filterValue(){
       this.localFilterValue = this.filterValue;
     },
