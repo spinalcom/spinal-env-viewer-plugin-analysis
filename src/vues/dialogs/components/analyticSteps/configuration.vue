@@ -131,6 +131,24 @@
         </md-field>
       </div>
 
+      <div v-if="requirePhoneInformation">
+        <md-field class="fixed-size-field">
+          <label>Phone number</label>
+          <md-input
+           @change="update('phoneNumber',localPhoneNumber)"
+            v-model="localPhoneNumber"
+          ></md-input>
+        </md-field>
+        <md-field class="fixed-size-field">
+          <label>Message</label>
+          <md-input
+           @change="update('phoneMessage',localPhoneMessage)"
+           type="text"
+            v-model="localPhoneMessage"
+          ></md-input>
+        </md-field>
+      </div>
+
       <md-field class="fixed-size-field">
         <label
           >Interval time (ms), 0 will make the analytic behave in COV
@@ -168,7 +186,9 @@ export default {
     'ticketContextId',
     'ticketProcessId',
     'alarmPriority',
-    'triggerAtStart'
+    'triggerAtStart',
+    'phoneNumber',
+    'phoneMessage'
   ],
   components: {},
   data() {
@@ -181,6 +201,8 @@ export default {
       localTicketContextId: this.ticketContextId,
       localTicketProcessId: this.ticketProcessId,
       localAlarmPriority: this.alarmPriority,
+      localPhoneNumber: this.phoneNumber,
+      localPhoneMessage: this.phoneMessage,
       localTriggerAtStart: this.triggerAtStart,
     };
   },
@@ -211,6 +233,10 @@ export default {
 
     requireAlarmPriority(){
       return this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.ALARM
+    },
+
+    requirePhoneInformation(){
+      return this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.SMS
     }
   },
 
@@ -242,6 +268,7 @@ export default {
     triggerAtStart() {
       this.localTriggerAtStart = this.triggerAtStart;
     },
+
   },
 };
 </script>

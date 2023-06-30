@@ -50,6 +50,8 @@
           v-bind:intervalTime.sync="intervalTime"
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
+          v-bind:phoneNumber.sync="phoneNumber"
+          v-bind:phoneMessage.sync="phoneMessage"
           v-bind:alarmPriority.sync="alarmPriority"
           v-bind:triggerAtStart.sync="triggerAtStart"
         >
@@ -100,6 +102,10 @@ import {
   CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
   CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
   CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
+  CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS,
+  ATTRIBUTE_PHONE_NUMBER,
+  ATTRIBUTE_PHONE_MESSAGE,
+  ANALYTIC_RESULT_TYPE,
   algos,
 } from 'spinal-model-analysis';
 
@@ -128,6 +134,10 @@ export default {
       CATEGORY_ATTRIBUTE_RESULT_PARAMETERS;
     this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS =
       CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS;
+    this.CONST_CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS= CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS;
+    this.CONST_ATTRIBUTE_PHONE_NUMBER = ATTRIBUTE_PHONE_NUMBER;
+    this.CONST_ATTRIBUTE_PHONE_MESSAGE = ATTRIBUTE_PHONE_MESSAGE;
+    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
     this.STEPPERS_DATA = {
       analytic: 'first',
       followedEntity: 'second',
@@ -154,8 +164,11 @@ export default {
       algorithmParameters: [],
       ticketContextId: '',
       ticketProcessId: '',
+      phoneNumber:'',
+      phoneMessage:'',
       alarmPriority: null,
       triggerAtStart:false,
+
 
 
       selectedNode: undefined,
@@ -295,11 +308,26 @@ export default {
             type: 'number',
           });
         }
+          
           configAttributes[
             this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
           ] = formattedTicketAttributes;
-  
+      
         }
+        if(this.resultType == this.CONST_ANALYTIC_RESULT_TYPE.SMS){
+          configAttributes[this.CONST_CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS] = [
+            {
+              name: this.CONST_ATTRIBUTE_PHONE_NUMBER,
+              value: this.phoneNumber,
+              type: 'string',
+            },
+            {
+              name: this.CONST_ATTRIBUTE_PHONE_MESSAGE,
+              value: this.phoneMessage,
+              type: 'string',
+            },
+          ];
+        };
         console.log('configAttributes :', configAttributes);
         const configInfo = await spinalAnalyticService.addConfig(
           configAttributes,
