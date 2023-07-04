@@ -27,6 +27,11 @@ export default class SpinalAttributeService {
 
   constructor() { }
 
+  async testGetAllAttributes(nodeId) {
+    const node = SpinalGraphService.getRealNode(nodeId);
+    return serviceDocumentation.getAllAttributes(nodeId)
+  }
+
   getAllAttributes(nodeId, liste) {
     let realNode = SpinalGraphService.getRealNode(nodeId);
 

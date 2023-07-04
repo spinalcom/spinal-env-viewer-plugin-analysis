@@ -26,7 +26,7 @@
         </md-button>
 
         <md-button
-          v-if="!isGroupEntitySelected"
+          v-if="showSpatialSelector"
           @click="showSelectSpatialEntityDialog = true"
         >
           Follow spatial entity
@@ -84,9 +84,10 @@ export default {
     },
   },
   computed: {
-    isGroupEntitySelected() {
-      if (!this.followedEntity) return false;
-      return this.entityType.includes('Group');
+
+    showSpatialSelector(){
+      if (!this.entityType) return false;
+      return !this.entityType.includes('Group') && this.entityType !== 'BIMObject';
     },
 
     followedEntityName() {

@@ -132,6 +132,10 @@ export default {
             entity
           );
         if (!capturedInput) return "!! Not found !!";
+        if(tracking.trackingMethod === this.CONST_TRACK_METHOD.ATTRIBUTE_NAME_FILTER){
+          if (Array.isArray(capturedInput)) return capturedInput.map(el => el.label.get());
+          return capturedInput.label.get();
+        }
         if(Array.isArray(capturedInput)) return capturedInput.map(el => el.name.get());
         return capturedInput.name.get();
     },
@@ -144,6 +148,7 @@ export default {
           previewData[parentEntityName][subEntityName] = capturedInputs;
         }
         },
+
     async getPreviewData(tracking) {
       this.showPreviewDialog = true;
       this.previewData = '';

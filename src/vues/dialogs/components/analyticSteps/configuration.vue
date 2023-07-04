@@ -161,7 +161,7 @@
         ></md-input>
       </md-field>
 
-      <md-switch v-model="localTriggerAtStart"> Trigger instantly when organs starts </md-switch>
+      <md-switch @change="update('triggerAtStart',localTriggerAtStart)" v-model="localTriggerAtStart"> Trigger instantly when organs starts </md-switch>
 
     </md-content>
   </md-step>
@@ -211,6 +211,7 @@ export default {
   },
   methods: {
     update(key, value) {
+      console.log("update ", key, value)
       if (key == 'algorithm' && this.algorithm != value){
         this.update('algorithmParameters', [])
       }
