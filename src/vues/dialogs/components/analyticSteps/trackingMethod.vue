@@ -132,8 +132,9 @@ export default {
             entity
           );
         if (!capturedInput) return "!! Not found !!";
+        console.log('capturedInput :', capturedInput);
         if(tracking.trackingMethod === this.CONST_TRACK_METHOD.ATTRIBUTE_NAME_FILTER){
-          if (Array.isArray(capturedInput)) return capturedInput.map(el => el.label.get());
+          if (Array.isArray(capturedInput)) return capturedInput;
           return capturedInput.label.get();
         }
         if(Array.isArray(capturedInput)) return capturedInput.map(el => el.name.get());
@@ -159,6 +160,7 @@ export default {
       );
       let followedEntityName = followedEntityInfo.name.get();
       followedEntityName = followedEntityName.replace(/(\r\n|\n|\r)/gm, "");
+
       const previewData = { [followedEntityName]: {} };
       if (this.entityType === followedEntityInfo.type.get()) {
         const capturedInputs = await this.getCapturedInputs(tracking,followedEntityInfo);
