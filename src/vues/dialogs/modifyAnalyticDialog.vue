@@ -16,56 +16,88 @@
         <analytic-name
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
-          :editable="false"
           v-bind:analyticName.sync="analyticName"
+          v-bind:analyticDescription.sync="analyticDescription"
+          v-bind:analyticShouldTriggerAtStart.sync="analyticShouldTriggerAtStart"
+          v-bind:analyticStatus.sync="analyticStatus"
+          :editable="false"
         ></analytic-name>
 
-        <followed-entity
+         <followed-entity
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :entityType="entityType"
           v-bind:followedEntity.sync="followedEntity"
         ></followed-entity>
 
-        <tracking-method
+        <input-configuration
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :entityType="entityType"
           :followedEntity="followedEntity"
-          @addTrackingMethod="addTrackingMethod"
-          @removeTrackingMethod="removeTrackingMethod"
-          v-bind:trackingMethods.sync="trackingMethods"
-          v-bind:trackingIntervalTime.sync="trackingIntervalTime"
+          @addInput="addInput"
+          @removeInput="removeInput"
+          v-bind:inputs.sync="inputs"
         >
-        </tracking-method>
+        </input-configuration>
 
-        <configuration
+        <trigger-configuration
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
-          v-bind:algorithm.sync="algorithm"
-          v-bind:algorithmParameters.sync="algorithmParameters"
+          :inputs="inputs"
+          @addTrigger="addTrigger"
+          @removeTrigger="removeTrigger"
+          v-bind:triggers.sync="triggers"
+        >
+        </trigger-configuration>
+
+        <algorithm-configuration
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          @addAlgorithm="addAlgorithm"
+          @removeAlgorithm="removeAlgorithm"
+          v-bind:algorithms.sync="algorithms"
+          >
+        </algorithm-configuration>
+
+
+        <result-configuration
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          :inputs="inputs"
           v-bind:resultName.sync="resultName"
           v-bind:resultType.sync="resultType"
           v-bind:intervalTime.sync="intervalTime"
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
-          v-bind:alarmPriority.sync="alarmPriority"
-          v-bind:triggerAtStart.sync="triggerAtStart"
-        >
-        </configuration>
+          v-bind:phoneNumber.sync="phoneNumber"
+          v-bind:phoneMessage.sync="phoneMessage"
+          v-bind:alarmPriority.sync="alarmPriority">
+        </result-configuration>
+
+
+        <io-dependencies
+          :STEPPERS_DATA="STEPPERS_DATA"
+          :stepper="stepper"
+          :inputs="inputs"
+          :algorithms="algorithms"
+          v-bind:ioDependencies.sync="ioDependencies"
+          >
+        </io-dependencies>
 
         <summary-analytic
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :analyticName="analyticName"
           :trackingMethods="trackingMethods"
+          :followedEntity="followedEntity"
           :algorithm="algorithm"
           :algorithmParameters="algorithmParameters"
           :resultName="resultName"
           :resultType="resultType"
           :intervalTime="intervalTime"
         >
-        </summary-analytic>
+        </summary-analytic> 
       </md-steppers>
     </md-dialog-content>
 
@@ -76,12 +108,12 @@
 
       <md-button
         class="md-primary"
-        v-if="stepper.active !== this.STEPPERS_DATA.recap"
+        v-if="stepper.active !== this.STEPPERS_DATA.summary"
         @click="PassToNextStep"
         >Next
       </md-button>
       <md-button
-        v-if="stepper.active === this.STEPPERS_DATA.recap"
+        v-if="stepper.active === this.STEPPERS_DATA.summary"
         :disabled="isSaveButtonDisabled()"
         class="md-primary"
         @click="closeDialog(true)"
@@ -98,16 +130,43 @@ import {
   CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
   CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
   CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
+  CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS,
+  CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS,
+  CATEGORY_ATTRIBUTE_IO_DEPENDENCIES,
+  CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS,
+  CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING,
+  ATTRIBUTE_PHONE_NUMBER,
+  ATTRIBUTE_PHONE_MESSAGE,
+  ATTRIBUTE_SEPARATOR,
+  ATTRIBUTE_TRACKING_METHOD,
+  ATTRIBUTE_FILTER_VALUE,
+  ATTRIBUTE_TIMESERIES,
+  ATTRIBUTE_RESULT_NAME,
+  ATTRIBUTE_RESULT_TYPE,
+  ATTRIBUTE_ANALYTIC_STATUS,
+  ATTRIBUTE_ANALYTIC_DESCRIPTION,
+  ATTRIBUTE_TRIGGER_AT_START,
+  ATTRIBUTE_TICKET_CONTEXT_ID,
+  ATTRIBUTE_TICKET_PROCESS_ID,
+  ATTRIBUTE_ALARM_PRIORITY,
+  ATTRIBUTE_VALUE_SEPARATOR,
   ANALYTIC_RESULT_TYPE,
+  ANALYTIC_STATUS,
+  TRACK_METHOD,
   algos,
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
 import followedEntityVue from './components/analyticSteps/followedEntity.vue';
-import trackingMethodVue from './components/analyticSteps/trackingMethod.vue';
+import inputConfiguration from './components/analyticSteps/inputConfiguration.vue';
+import triggerConfiguration from './components/analyticSteps/triggerConfiguration.vue';
+import algorithmConfiguration from './components/analyticSteps/algorithmConfiguration.vue';
+import resultConfiguration from './components/analyticSteps/resultConfiguration.vue';
+import IODependenciesVue from './components/analyticSteps/IODependencies.vue';
 import configurationVue from './components/analyticSteps/configuration.vue';
 import summaryVue from './components/analyticSteps/summary.vue';
 import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
+import AttributeService, { attributeService} from 'spinal-env-viewer-plugin-documentation-service';
 
 export default {
   name: 'modifyAnalyticDialog',
@@ -115,58 +174,76 @@ export default {
   components: {
     'analytic-name': analyticNameVue,
     'followed-entity': followedEntityVue,
-    'tracking-method': trackingMethodVue,
+    'input-configuration': inputConfiguration,
+    'trigger-configuration': triggerConfiguration,
+    'algorithm-configuration': algorithmConfiguration,
+    'result-configuration': resultConfiguration,
+    'io-dependencies': IODependenciesVue,
     'configuration': configurationVue,
     'summary-analytic': summaryVue,
   },
   data() {
-    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
-    this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS =
-      CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS;
-    this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS =
-      CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS;
-    this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS =
-      CATEGORY_ATTRIBUTE_RESULT_PARAMETERS;
-    this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS = 
-      CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS;
+
     this.STEPPERS_DATA = {
       analytic: 'first',
       followedEntity: 'second',
-      trackingMethod: 'third',
-      config: 'fourth',
-      recap: 'fifth',
+      inputConfiguration: 'third',
+      triggerConfiguration: 'fourth',
+      algorithmConfiguration: 'fifth',
+      resultConfiguration: 'sixth',
+      IODependencies : 'seventh',
+      summary : 'eighth',
     };
+
     return {
       showDialog: true,
       showPreviewDialog: false,
+
+      // Analytic attributes data
       analyticName: '',
+      analyticDescription:'',
+      analyticShouldTriggerAtStart : undefined,
+      analyticStatus : undefined,
 
-      // Inputs related data
-      trackingMethods: [],
-      trackingIntervalTime: '',
-      followedEntity: undefined,
 
-      //Config related data
-      algorithm: '',
-      resultType: '',
-      resultName: '',
-      intervalTime: null,
-      algorithmParameters: [],
+      // Inputs -> Followed Entity -> attribute data
+      followedEntity: undefined, 
+
+      // Inputs  -> Tracking Method -> attribute data
+      inputs: { },
+
+
+      // Config -> trigger attribute data
+      triggers: { },
+
+      // Config -> Algorithms attribute data
+      algorithms: {},
+
+      // Config -> I/O Dependencies attribute data
+      ioDependencies : { R : ""},
+
+      // Config -> Result attribute data
+      resultType : '',
+      resultName : '', 
       ticketContextId: '',
       ticketProcessId: '',
-      alarmPriority : null,
-      triggerAtStart:false,
-
+      phoneNumber:'',
+      phoneMessage:'',
+      alarmPriority: null,
+      
       selectedNode: undefined,
       entityType: undefined,
 
       stepper: {
-        active: this.STEPPERS_DATA.followedEntity,
+        active: this.STEPPERS_DATA.analytic,
         first: false,
         second: false,
         third: false,
         fourth: false,
         fifth: false,
+        sixth: false,
+        seventh: false,
+        eighth: false,
       },
     };
   },
@@ -180,58 +257,75 @@ export default {
       this.analyticName = this.selectedNode.name.get();
       const followedEntityNode = await spinalAnalyticService.getFollowedEntity(selectedNodeId);
       this.followedEntity = followedEntityNode ? followedEntityNode.id.get() : undefined;
-      const trackingMethodNode = await spinalAnalyticService.getTrackingMethod(selectedNodeId);
-      const trackingParams = await spinalAnalyticService.getAttributesFromNode(
-        trackingMethodNode.id.get(),
-        this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-      );
+
+      // need to get all the category names first
+      const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(selectedNodeId);
+      const parseInputs = await spinalAnalyticService.getAllCategoriesAndAttributesFromNode(trackingMethodNodeRef.id.get());
+      for(const inputKey of Object.keys(parseInputs)){
+        this.inputs[inputKey] = { trackingMethod : parseInputs[inputKey][ATTRIBUTE_TRACKING_METHOD],
+                                  filterValue :parseInputs[inputKey][ATTRIBUTE_FILTER_VALUE],
+                                  timeseriesIntervalTime : parseInputs[inputKey][ATTRIBUTE_TIMESERIES] };
+      }
+
+      this.inputs = { ...this.inputs };
+      //this.input = Object.assign({}, this.inputs);
+
+      console.log(this.inputs);
       const configNode = await spinalAnalyticService.getConfig(selectedNodeId);
-      const configAlgoParams = await spinalAnalyticService.getAttributesFromNode(
-        configNode.id.get(),
-        this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
-      );
-      const configResultParams = await spinalAnalyticService.getAttributesFromNode(
-        configNode.id.get(),
-        this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
-      );
-
-      function extractParams(obj) {
-        const params = Object.keys(obj).filter(key => /^p\d/.test(key));
-        const extractedParams = [];
-
-        for (const key of params) {
-          extractedParams.push(obj[key]);
-        }
-        return extractedParams;
+      const analyticAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS);
+      this.analyticDescription = analyticAttributes[ATTRIBUTE_ANALYTIC_DESCRIPTION];
+      this.analyticStatus = analyticAttributes[ATTRIBUTE_ANALYTIC_STATUS]===ANALYTIC_STATUS.ACTIVE;
+      this.analyticShouldTriggerAtStart = analyticAttributes[ATTRIBUTE_TRIGGER_AT_START];
+      const triggerAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS);
+      for(const triggerKey of Object.keys(triggerAttributes)){
+        let triggerValue = triggerAttributes[triggerKey].split(ATTRIBUTE_VALUE_SEPARATOR);
+        this.triggers[triggerKey] = { triggerType : triggerValue[0],
+                                      triggerValue : triggerValue[1],
+                                      changeOfValueThreshold : triggerValue[2] ? triggerValue[2] : null };
       }
+      this.triggers = { ...this.triggers };
 
-      this.algorithm = configAlgoParams['algorithm'];
-      this.intervalTime = configAlgoParams['intervalTime'];
-      this.triggerAtStart = configAlgoParams['triggerAtStart'];
-      this.algorithmParameters = extractParams(configAlgoParams);
-      this.resultType= configResultParams['resultType'];
-      if ([this.CONST_ANALYTIC_RESULT_TYPE.TICKET,this.CONST_ANALYTIC_RESULT_TYPE.ALARM].includes(this.resultType)){
-        const configTicketParameters = await spinalAnalyticService.getAttributesFromNode(
-          configNode.id.get(),
-          this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
-        );
-        this.ticketContextId = configTicketParameters['ticketContextId'];
-        this.ticketProcessId = configTicketParameters['ticketProcessId'];
-        if(this.resultType === this.CONST_ANALYTIC_RESULT_TYPE.ALARM){
-          this.alarmPriority = configTicketParameters['alarmPriority'];
+      const algorithmMappingAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING);
+      for(const algorithmIndexName of Object.keys(algorithmMappingAttributes)){
+        this.algorithms[algorithmIndexName] = { name : algorithmMappingAttributes[algorithmIndexName],
+                                                params : []};
+      }
+      const algorithmParametersAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS);
+      for(const algorithmIndexName of Object.keys(this.algorithms)){
+        let algoName = this.algorithms[algorithmIndexName].name;
+        const doc = algos[algoName].requiredParams;
+        for(let i = 0 ; i<doc.length; i++){
+          this.algorithms[algorithmIndexName].params.push(algorithmParametersAttributes[`${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`]);
         }
       }
-      this.resultName = configResultParams['resultName'];
-      console.log("TRACKING PARAMS ",trackingParams);
+      this.algorithms = { ...this.algorithms };
 
-      this.trackingMethods= this.formatTrackingMethodsToList(trackingParams);
-      console.log("TRACKING METHODS ",this.trackingMethods);
-      this.trackingIntervalTime = trackingParams['trackingIntervalTime'];
+      const resultAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_RESULT_PARAMETERS);
+      this.resultType = resultAttributes[ATTRIBUTE_RESULT_TYPE];
+      this.resultName = resultAttributes[ATTRIBUTE_RESULT_NAME];
+      if ([ANALYTIC_RESULT_TYPE.TICKET,ANALYTIC_RESULT_TYPE.ALARM].includes(this.resultType)){
+        const ticketAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS);
+        this.ticketContextId = ticketAttributes[ATTRIBUTE_TICKET_CONTEXT_ID];
+        this.ticketProcessId = ticketAttributes[ATTRIBUTE_TICKET_PROCESS_ID];
+        if(this.resultType === ANALYTIC_RESULT_TYPE.ALARM){
+          this.alarmPriority = ticketAttributes[ATTRIBUTE_ALARM_PRIORITY];
+        }
+      }
+      if ([ANALYTIC_RESULT_TYPE.SMS].includes(this.resultType)){
+        const smsAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS);
+        this.phoneNumber = smsAttributes[ATTRIBUTE_PHONE_NUMBER];
+        this.phoneMessage = smsAttributes[ATTRIBUTE_PHONE_MESSAGE];
+      }
+      const ioAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_IO_DEPENDENCIES);
+      for(const ioDependencyName of Object.keys(ioAttributes)){
+        let ioDependencyValue = ioAttributes[ioDependencyName].split(ATTRIBUTE_VALUE_SEPARATOR);
+        this.ioDependencies[ioDependencyName] = ioDependencyValue;
+      }
+      this.ioDependencies = { ...this.ioDependencies };
     },
 
     async removed(res) {
       if (res.closeResult) {
-
         // there must be a better way to get the context id...
         const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
         const followedEntityNodeRef = await spinalAnalyticService.getFollowedEntity(this.selectedNode.id.get());
@@ -243,101 +337,70 @@ export default {
         if(!followedEntityNodeRef){
           await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,this.selectedNode.id.get(), this.followedEntity);
         }
-        const trackingMethodAttributes = {};
-        trackingMethodAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-        ] = [{name : 'trackingIntervalTime', type: 'number', value: this.trackingIntervalTime}];
-        for(let i = 0; i < this.trackingMethods.length; i++){
-          trackingMethodAttributes[
-            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-          ].push({ name: 'trackingMethod'+i, type: 'string', value: this.trackingMethods[i].trackingMethod });
-          trackingMethodAttributes[
-            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-          ].push({ name: 'filterValue'+i, type: 'string', value: this.trackingMethods[i].filterValue });
-          trackingMethodAttributes[
-            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-          ].push({ name: 'removeFromAnalysis'+i, type: 'boolean', value: this.trackingMethods[i].removeFromAnalysis });
-          trackingMethodAttributes[
-            this.CONST_CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS
-          ].push({ name: 'removeFromBinding'+i, type: 'boolean', value: this.trackingMethods[i].removeFromBinding });
 
-        }
-        
+
+
+        const trackingMethodAttributes = this.getTrackingMethodAttributes();
+        console.log('trackingMethodAttributes :', trackingMethodAttributes);
         const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(
           this.selectedNode.id.get(),
         );
         const trackingMethodNode =  SpinalGraphService.getRealNode(
           trackingMethodNodeRef.id.get(),
         );
-
-
         await spinalAnalyticService.addAttributesToNode(
           trackingMethodNode,
           trackingMethodAttributes,
         );
 
-
-
-
+        
         const configAttributes = {};
-        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] =
-          [];
+        const analyticAttributes = this.getAnalyticAttributes();
         configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
-        ].push({ name: 'resultType', type: 'string', value: this.resultType });
-        configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
-        ].push({ name: 'resultName', type: 'string', value: this.resultName });
+          CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS
+        ] = analyticAttributes;
 
-        const formattedAlgorithmParams = [];
-        const doc =  algos[this.algorithm].requiredParams;
-        for (let i = 0; i < this.algorithmParameters.length; i++) {
-          const paramValue = this.algorithmParameters[i];
-          formattedAlgorithmParams.push({
-            name: doc[i].name,
-            value: doc[i].type === 'number' ? +paramValue : paramValue,
-            type: doc[i].type,
-          });
-        }
-        configAttributes[this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS] =
-          formattedAlgorithmParams;
+
+        const resultAttributes = this.getResultAttributes();
         configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
-        ].push({ name: 'algorithm', type: 'string', value: this.algorithm });
+          CATEGORY_ATTRIBUTE_RESULT_PARAMETERS
+        ] = resultAttributes;
+
+        const algorithmParametersAttributes = this.getAlgorithmParametersAttributes();
         configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
-        ].push({
-          name: 'intervalTime',
-          type: 'number',
-          value: this.intervalTime,
-        });
+          CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
+        ] = algorithmParametersAttributes;
+
+        const algorithmMappingAttributes = this.getAlgorithmMappingAttributes();
         configAttributes[
-          this.CONST_CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS
-        ].push({
-          name: 'triggerAtStart',
-          type: 'boolean',
-          value: this.triggerAtStart,
-        });
+          CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING
+        ] = algorithmMappingAttributes;
 
         if (this.ticketContextId && this.ticketProcessId) {
-          const formattedTicketAttributes = [];
-          formattedTicketAttributes.push({
-            name: 'ticketContextId',
-            value: this.ticketContextId,
-            type: 'string',
-          });
-          formattedTicketAttributes.push({
-            name: 'ticketProcessId',
-            value: this.ticketProcessId,
-            type: 'string',
-          });
-
+          const ticketAttributes = this.getTicketAttributes();
           configAttributes[
-            this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
-          ] = formattedTicketAttributes;
-          /*await spinalAnalyticService.addAttributesToConfig(configInfo.id.get(),this.CONST_CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
-          formattedTicketAttributes);*/
+            CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
+          ] = ticketAttributes;
         }
+
+        if(this.resultType == ANALYTIC_RESULT_TYPE.SMS){
+          const smsAttributes = this.getSMSAttributes();
+          configAttributes[
+            CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS
+          ] = smsAttributes;
+        };
+
+        const ioAttributes = this.getIOAttributes();
+        configAttributes[
+          CATEGORY_ATTRIBUTE_IO_DEPENDENCIES
+        ] = ioAttributes;
+
+        const triggerAttributes = this.getTriggerAttributes();
+        configAttributes[
+          CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS
+        ] = triggerAttributes;
+
+
 
         const configNodeRef = await spinalAnalyticService.getConfig(
           this.selectedNode.id.get()
@@ -365,34 +428,74 @@ export default {
       }
     },
 
-    disabledButton() {
-      return false;
+    addInput() {
+      let length = Object.keys(this.inputs).length;
+      console.log('adding input');
+      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 }};
+      //this.inputs[nextInputName] = { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 };
     },
 
-    formatTrackingMethodsToList(obj) {
-    let result = [];
-    let keys = Object.keys(obj);
-    let length = (keys.length-1) / 4;
+    removeInput(inputName) {
+      delete this.inputs[inputName];
+      let index = Number(inputName.match(/(\d+)/)[0]);
+      // shift back all the inputs after the deleted one.
+      let i = index;
+      while (this.inputs[`I${i + 1}`] !== undefined) {
+        this.inputs[`I${i}`] = this.inputs[`I${i + 1}`];
+        i++;
+      }
+      // Remove the last item.
+      delete this.inputs[`I${i}`];
 
-    for (let i = 0; i < length; i++) {
-        let item = {
-            trackingMethod: obj[`trackingMethod${i}`],
-            filterValue: obj[`filterValue${i}`],
-            removeFromAnalysis: obj[`removeFromAnalysis${i}`],
-            removeFromBinding: obj[`removeFromBinding${i}`]
-        };
-        result.push(item);
-    }
-
-    return result;
+      this.inputs = { ...this.inputs };
+      console.log("deleted input : ", inputName);
     },
 
-    addTrackingMethod() {
-      this.trackingMethods.push({ trackingMethod: '', filterValue: '', removeFromAnalysis: false, removeFromBinding: false });
+    addTrigger() {
+      let length = Object.keys(this.triggers).length;
+      console.log('adding input');
+      this.triggers = { ...this.triggers, [`T${length}`]: { triggerType: '', triggerValue: '', changeOfValueThreshold : 0 }};
+      
     },
-    removeTrackingMethod(index) {
-      this.trackingMethods.splice(index, 1);
+
+    removeTrigger(triggerName) {
+      delete this.triggers[triggerName];
+      let index = Number(triggerName.match(/(\d+)/)[0]);
+      // shift back all the elements after the deleted one.
+      let i = index;
+      while (this.triggers[`T${i + 1}`] !== undefined) {
+        this.triggers[`T${i}`] = this.triggers[`T${i + 1}`];
+        i++;
+      }
+      // Remove the last item.
+      delete this.triggers[`T${i}`];
+
+      this.triggers = { ...this.triggers };
+      console.log("deleted trigger : ", triggerName);
     },
+
+    addAlgorithm(){
+      let length = Object.keys(this.algorithms).length;
+      console.log('adding algorithm');
+      this.algorithms = { ...this.algorithms, [`A${length}`]: { name :'', params: []}};
+    },
+
+    removeAlgorithm(algorithmIndexName){
+      delete this.algorithms[algorithmIndexName];
+      let index = Number(algorithmIndexName.match(/(\d+)/)[0]);
+      // shift back all the elements after the deleted one.
+      let i = index;
+      while (this.algorithms[`A${i + 1}`] !== undefined) {
+        this.algorithms[`A${i}`] = this.algorithms[`A${i + 1}`];
+        i++;
+      }
+      // Remove the last item.
+      delete this.algorithms[`A${i}`];
+
+      this.algorithms = { ...this.algorithms };
+      console.log("deleted algorithm : ", algorithmIndexName);
+    },
+
     changeStep(stepId) {
       this.stepper.active = stepId;
     },
@@ -405,19 +508,31 @@ export default {
           break;
         case this.STEPPERS_DATA.followedEntity:
           this.stepper.second = true;
-          this.stepper.active = this.STEPPERS_DATA.trackingMethod;
+          this.stepper.active = this.STEPPERS_DATA.inputConfiguration;
           break;
-        case this.STEPPERS_DATA.trackingMethod:
+        case this.STEPPERS_DATA.inputConfiguration:
           this.stepper.third = true;
-          this.stepper.active = this.STEPPERS_DATA.config;
+          this.stepper.active = this.STEPPERS_DATA.triggerConfiguration;
           break;
-        case this.STEPPERS_DATA.config:
+        case this.STEPPERS_DATA.triggerConfiguration:
           this.stepper.fourth = true;
-          this.stepper.active = this.STEPPERS_DATA.recap;
+          this.stepper.active = this.STEPPERS_DATA.algorithmConfiguration;
           break;
-        case this.STEPPERS_DATA.recap:
+        case this.STEPPERS_DATA.algorithmConfiguration:
           this.stepper.fifth = true;
-          this.stepper.active = this.STEPPERS_DATA.recap;
+          this.stepper.active = this.STEPPERS_DATA.resultConfiguration;
+          break;
+        case this.STEPPERS_DATA.resultConfiguration:
+          this.stepper.sixth = true;
+          this.stepper.active = this.STEPPERS_DATA.IODependencies;
+          break;
+        case this.STEPPERS_DATA.IODependencies:
+          this.stepper.seventh = true;
+          this.stepper.active = this.STEPPERS_DATA.summary;
+          break;
+        case this.STEPPERS_DATA.summary:
+          this.stepper.eighth = true;
+          this.stepper.active = this.STEPPERS_DATA.summary;
           break;
       }
     },
@@ -429,10 +544,163 @@ export default {
         this.resultType === '' ||
         this.resultName === '' ||
         this.intervalTime === null ||
-        this.trackingMethod === '' ||
-        this.filterValue === '' ||
         !this.followedEntity
       );
+    },
+
+    getTrackingMethodAttributes(){
+      const trackingMethodAttributes = {};
+      for ( const inputKey of Object.keys(this.inputs))
+      {
+        trackingMethodAttributes[inputKey] = []
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TRACKING_METHOD}`,
+                  type: 'string',
+                  value: this.inputs[inputKey].trackingMethod });
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_FILTER_VALUE}`,
+                  type: 'string',
+                  value: this.inputs[inputKey].filterValue });
+
+        if([TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER,TRACK_METHOD.ENDPOINT_NAME_FILTER].includes(this.inputs[inputKey].trackingMethod) ){
+          trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,
+                  type: 'number',
+                  value: this.inputs[inputKey].timeseriesIntervalTime });
+        }
+        
+      }
+      return trackingMethodAttributes;
+    },
+
+    getAnalyticAttributes(){
+      const analyticAttributes = [];
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_ANALYTIC_DESCRIPTION}`,
+        type: 'string',
+        value: this.analyticDescription,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_ANALYTIC_STATUS}`,
+        type: 'string',
+        value: this.analyticStatus,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_TRIGGER_AT_START}`,
+        type: 'boolean',
+        value: this.analyticShouldTriggerAtStart,
+      });
+      return analyticAttributes;
+    },
+
+    getResultAttributes(){
+      const resultAttributes = [];
+      resultAttributes.push({
+        name: `${ATTRIBUTE_RESULT_TYPE}`,
+        type: 'string',
+        value: this.resultType,
+      });
+      resultAttributes.push({
+        name: `${ATTRIBUTE_RESULT_NAME}`,
+        type: 'string',
+        value: this.resultName,
+      });
+      return resultAttributes;
+    },
+
+    getAlgorithmParametersAttributes(){
+      const algorithmParametersAttributes = [];
+      for (const algorithmIndexName of Object.keys(this.algorithms)) {
+        let algoName = this.algorithms[algorithmIndexName].name;
+        const doc = algos[algoName].requiredParams;
+        for(let i = 0 ; i<this.algorithms[algorithmIndexName].params.length; i++){
+          algorithmParametersAttributes.push({
+            name: `${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`,
+            value: doc[i].type === 'number' ? + this.algorithms[algorithmIndexName].params[i] : this.algorithms[algorithmIndexName].params[i],
+            type: doc[i].type,
+          });
+        }
+      }
+      return algorithmParametersAttributes;
+    },
+
+    getAlgorithmMappingAttributes(){
+      const algorithmMappingAttributes = [];
+      for (const algorithmIndexName of Object.keys(this.algorithms)) {
+        algorithmMappingAttributes.push({
+          name: `${algorithmIndexName}`,
+          type: 'string',
+          value: this.algorithms[algorithmIndexName].name,
+        });
+      }
+      return algorithmMappingAttributes;
+    },
+
+    getTicketAttributes(){
+      const ticketAttributes = [];
+      ticketAttributes.push({
+        name: `${ATTRIBUTE_TICKET_CONTEXT_ID}`,
+        type: 'string',
+        value: this.ticketContextId,
+      });
+      ticketAttributes.push({
+        name: `${ATTRIBUTE_TICKET_PROCESS_ID}`,
+        type: 'string',
+        value: this.ticketProcessId,
+      });
+      if(this.alarmPriority){
+          ticketAttributes.push({
+            name: `${ATTRIBUTE_ALARM_PRIORITY}`,
+            value: this.alarmPriority,
+            type: 'number',
+          });
+        }
+      return ticketAttributes;
+    },
+
+    getSMSAttributes(){
+      const smsAttributes = [];
+      smsAttributes.push({
+        name: `${ATTRIBUTE_PHONE_NUMBER}`,
+        type: 'string',
+        value: this.phoneNumber,
+      });
+      smsAttributes.push({
+        name: `${ATTRIBUTE_PHONE_MESSAGE}`,
+        type: 'string',
+        value: this.phoneMessage,
+      });
+      return smsAttributes;
+    },
+
+    getIOAttributes(){
+      const ioAttributes = [];
+      for (const ioDependencyName of Object.keys(this.ioDependencies)) {
+        let str = "";
+        for (const ioDependency of this.ioDependencies[ioDependencyName]) {
+          str += `${ioDependency}${ATTRIBUTE_VALUE_SEPARATOR}`;
+        }
+        str = str.slice(0, -1);
+        ioAttributes.push({
+          name: `${ioDependencyName}`,
+          type: 'string',
+          value: str,
+        });
+      }
+      return ioAttributes;
+    },
+
+    getTriggerAttributes(){
+      const triggerAttributes = [];
+      for (const triggerIndex of Object.keys(this.triggers)) {
+        let str = `${this.triggers[triggerIndex].triggerType}${ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].triggerValue}`;
+        if (this.triggers[triggerIndex].changeOfValueThreshold !== null) {
+          str += `${ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].changeOfValueThreshold}`;
+        }
+        triggerAttributes.push({
+          name: `${triggerIndex}`,
+          type: 'string',
+          value: str,
+        });
+      }
+      return triggerAttributes;
     },
 
   },
@@ -441,8 +709,8 @@ export default {
 
 <style scoped>
 .mdDialog {
-  width: 1000px;
-  max-width: 1000px;
+  width: 1200px;
+  max-width: 1500px;
   height: 600px;
 }
 
@@ -451,10 +719,10 @@ export default {
 }
 
 .mdDialog .mdDialogContainer {
-  width: 1000px;
-  max-width: 1000px;
+  width: 1200px;
+  max-width: 1500px;
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .fixed-size-field {
@@ -474,7 +742,7 @@ export default {
 .mdDialog .mdDialogContainer .mdStep {
   height: 350px;
   padding: 10px 0px;
-  overflow: hidden;
+  overflow: auto;
 }
 </style>
 

@@ -1,9 +1,9 @@
 <template>
   <md-step
     class="mdStep"
-    :id="STEPPERS_DATA.recap"
+    :id="STEPPERS_DATA.summary"
     md-label="Summary"
-    :md-done.sync="stepper.fifth"
+    :md-done.sync="stepper.eighth"
   >
     <md-content class="contents md-scrollbar">
       <p>

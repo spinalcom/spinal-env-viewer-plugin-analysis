@@ -1,84 +1,80 @@
 <template>
   <md-step
     class="mdStep"
-    :id="STEPPERS_DATA.trackingMethod"
-    md-label="Tracking method"
+    :id="STEPPERS_DATA.inputConfiguration"
+    md-label="Inputs"
     :md-done.sync="stepper.third"
   >
     <md-content class="contents md-scrollbar">
-      <p>Each tracking method is an input for the algorithm</p>
-      <div v-for="(tracking, index) in localTrackingMethods" :key="index" class="trackingMethodBlock">
-      <b>Tracking Method {{index+1}}</b>
-      <md-field class="fixed-size-field">
-        <label>Tracking Method</label>
-        <md-select v-model="tracking.trackingMethod">
-          <md-option
-            v-for="data of CONST_TRACK_METHOD"
-            :key="data"
-            :value="data"
-          >{{ data }}</md-option
-          >
-        </md-select>
-      </md-field>
-      <md-button
-        class="md-primary"
-        :disabled="isShowAvailableDataDisabled(tracking)"
-        @click="getPreviewData(tracking)"
-      >
-        Show available data
-      </md-button>
-      <md-field class="fixed-size-field"  v-if="tracking.trackingMethod != ''">
-        <label>Filter Value ( Case sensitive )</label>
-        <md-input v-model="tracking.filterValue"></md-input>
-      </md-field>
-
-      <md-switch v-model="tracking.removeFromAnalysis"> Algorithm should ignore this input </md-switch>
-      <md-switch v-model="tracking.removeFromBinding"> Binding process should ignore this input </md-switch>
-
-
-
-      <md-button
-        class="md-primary"
-        :disabled="isPreviewDisabled(tracking)"
-        @click="getPreviewData(tracking)"
-      >
-        Preview input
-      </md-button>
-      <md-button
-        class="md-accent"
-        @click="removeTrackingMethod(index)">
-        Remove
-      </md-button>
-
-    </div>
-
-    <md-button
-      class="md-primary"
-      @click="addTrackingMethod"
-    >
-      Add Tracking Method
-    </md-button>
-
-    
-
-      <md-field class="fixed-size-field">
-        <label> Timeseries interval time (ms) </label>
-        <md-input type="number" @change="updateTrackingIntervalTime" v-model="localTrackingIntervalTime"></md-input>
-      </md-field>
+      <p>Each tracking method is an input for an algorithm</p>
       <p>
-        Interval time from which to gather data. Must be positive or null. If
+        Timeseries interval time is how far in the past should the analytic gather data. Must be positive or null. If
         null (equal 0), only the currentValue will be picked, otherwise, the
         data will be picked from the current time at which the analytic will be
         run to (currentTime - intervalTime). Beware, if the interval time > 0,
         make sure the control-endpoint/ endpoint has timeseries.
       </p>
+      <div v-for="([inputName, value]) in Object.entries(localInputs)" :key="inputName" class="trackingMethodBlock">
+
+        <b>Input {{inputName}}</b>
+        <md-field class="fixed-size-field">
+          <label>Tracking Method</label>
+          <md-select v-model="value.trackingMethod">
+            <md-option
+              v-for="data of TRACK_METHOD"
+              :key="data"
+              :value="data"
+            >{{ data }}</md-option
+            >
+          </md-select>
+        </md-field>
+        <md-button
+          class="md-primary"
+          :disabled="isShowAvailableDataDisabled(value)"
+          @click="getPreviewData(value)"
+        >
+          Show available data
+        </md-button>
+        <md-field class="fixed-size-field"  v-if="value.trackingMethod != ''">
+          <label> Filter Value ( Case sensitive )</label>
+          <md-input v-model="value.filterValue"></md-input>
+        </md-field>
+
+        <md-field class="fixed-size-field"  v-if="showTimeSeriesField(value)">
+          <label> Timeseries interval time ( 0 to only take current value )</label>
+          <md-input type="number" v-model="value.timeseriesIntervalTime"></md-input>
+        </md-field>
+        
+        <md-button
+          class="md-primary"
+          :disabled="isPreviewDisabled(value)"
+          @click="getPreviewData(value)"
+        >
+          Preview input
+        </md-button>
+        <md-button
+          class="md-accent"
+          @click="removeInput(inputName)">
+          Remove
+        </md-button>
+        
+      </div>
+
+      <md-button
+        class="md-primary"
+        @click="addInput"
+      >
+        Add Input
+      </md-button>
+
+      <!--     
       <md-button
         class="md-primary"
         :disabled="isGlobalPreviewDisabled"
         @click="getGlobalPreviewData()"
       >
-        Preview All inputs
-      </md-button>
+      Preview All inputs
+      </md-button> -->
     </md-content>
     <preview-dialog
       :visible="showPreviewDialog"
@@ -96,32 +92,29 @@ import previewDialogVue from '../previewDialog.vue';
 
 export default {
   props: ['STEPPERS_DATA', 'stepper','entityType','followedEntity'
-  ,'trackingMethods', 'trackingIntervalTime' ],
+  ,'inputs' ],
   components: {
     'preview-dialog': previewDialogVue,
   },
   data() {
-    this.CONST_TRACK_METHOD = TRACK_METHOD;
     return {
-        localTrackingMethods : this.trackingMethods,
-        localTrackingIntervalTime: this.trackingIntervalTime,
+        localInputs : this.inputs,
         showPreviewDialog:false,
         previewData: '',
       
     };
   },
+  created() {
+    this.TRACK_METHOD = TRACK_METHOD;
+  },
   methods: {
-    updateTrackingIntervalTime() {
-      this.$emit('update:trackingIntervalTime', this.localTrackingIntervalTime);
+    
+    addInput() {
+      console.log('clicked on button add input');
+      this.$emit('addInput');
     },
-    updateTrackingMethods() {
-      this.$emit('update:trackingMethods', this.localTrackingMethods);
-    },
-    addTrackingMethod() {
-      this.$emit('addTrackingMethod');
-    },
-    removeTrackingMethod(index){
-      this.$emit('removeTrackingMethod',index);
+    removeInput(index){
+      this.$emit('removeInput',index);
     },
 
     async getCapturedInputs(tracking,entity){
@@ -133,7 +126,7 @@ export default {
           );
         if (!capturedInput) return "!! Not found !!";
         console.log('capturedInput :', capturedInput);
-        if(tracking.trackingMethod === this.CONST_TRACK_METHOD.ATTRIBUTE_NAME_FILTER){
+        if(tracking.trackingMethod === this.TRACK_METHOD.ATTRIBUTE_NAME_FILTER){
           if (Array.isArray(capturedInput)) return capturedInput;
           return capturedInput.label.get();
         }
@@ -148,8 +141,7 @@ export default {
           const capturedInputs = await this.getCapturedInputs(tracking,subEntity);
           previewData[parentEntityName][subEntityName] = capturedInputs;
         }
-        },
-
+    },
     async getPreviewData(tracking) {
       this.showPreviewDialog = true;
       this.previewData = '';
@@ -192,11 +184,10 @@ export default {
       //this.previewData = JSON.stringify(previewData, null, 2);
       this.previewData = previewData;
     },
-
-
     closePreviewDialog(){
       this.showPreviewDialog = false;
     },
+
     isPreviewDisabled(tracking) {
       return (
         !this.followedEntity ||
@@ -209,6 +200,10 @@ export default {
         !this.followedEntity ||
         tracking.trackingMethod === ''
       );
+    },
+    showTimeSeriesField(tracking) {
+      return  (tracking.trackingMethod === this.TRACK_METHOD.ENDPOINT_NAME_FILTER ||
+       tracking.trackingMethod === this.TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER);
     },
 
   },
@@ -231,15 +226,9 @@ export default {
   },
 
   watch:{
-
-    filterValue(){
-      this.localFilterValue = this.filterValue;
-    },
-    trackingIntervalTime(){
-      this.localTrackingIntervalTime = this.trackingIntervalTime;
-    },
-    trackingMethods(){
-      this.localTrackingMethods = this.trackingMethods;
+    inputs(){
+      console.log('parent inputs changed')
+      this.localInputs = this.inputs;
     }
   }
 };

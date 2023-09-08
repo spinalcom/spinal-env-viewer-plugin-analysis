@@ -102,7 +102,7 @@ export default {
          }
          
       },
-
+   
       getAllData() {
          attributeService.getAllGroupContext(this.type).then((res) => {
             this.data = res;

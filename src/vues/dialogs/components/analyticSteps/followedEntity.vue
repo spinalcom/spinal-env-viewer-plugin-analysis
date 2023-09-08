@@ -2,12 +2,12 @@
   <md-step
     class="mdStep"
     :id="STEPPERS_DATA.followedEntity"
-    md-label="Followed entity"
+    md-label="Anchor"
     :md-done.sync="stepper.second"
   >
     <md-content class="contents md-scrollbar">
       <div>
-        <p> The followed entity is the source that is providing the inputs.</p>
+        <p> The followed entity (Anchor) is the source that is providing the inputs.</p>
         <p>
           For exemple, if the target entity type is Room and the followed entity
           is a room, the analytic will be applied to that specific room.</p
