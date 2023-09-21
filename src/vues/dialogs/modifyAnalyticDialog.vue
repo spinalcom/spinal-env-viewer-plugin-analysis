@@ -580,7 +580,7 @@ export default {
       analyticAttributes.push({
         name: `${ATTRIBUTE_ANALYTIC_STATUS}`,
         type: 'string',
-        value: this.analyticStatus,
+        value: this.analyticStatus? ANALYTIC_STATUS.ACTIVE : ANALYTIC_STATUS.INACTIVE,
       });
       analyticAttributes.push({
         name: `${ATTRIBUTE_TRIGGER_AT_START}`,
