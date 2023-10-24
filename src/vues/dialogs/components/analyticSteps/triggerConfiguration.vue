@@ -32,7 +32,7 @@
         
         <md-field class="fixed-size-field"  v-if="value.triggerType == TRIGGER_TYPE.INTERVAL_TIME">
           <label> Interval time value (ms) </label>
-          <md-input type="number" v-model="value.triggerValue"></md-input>
+          <md-input type="number" min="0" v-model="value.triggerValue"></md-input>
         </md-field>
         <md-field class="fixed-size-field" v-if="showInputSelection(value.triggerType)">
           <label>Input selection (which input do you want to use for change of value tracking)</label>
@@ -47,7 +47,7 @@
         </md-field>  
         <md-field class="fixed-size-field"  v-if="value.triggerType == TRIGGER_TYPE.CHANGE_OF_VALUE_WITH_THRESHOLD">
           <label> Threshold value  (any change greater than treshold value will trigger analytic) </label>
-          <md-input type="number" v-model="value.changeOfValueThreshold"></md-input>
+          <md-input type="number" min="0" v-model="value.changeOfValueThreshold"></md-input>
         </md-field>
 
 

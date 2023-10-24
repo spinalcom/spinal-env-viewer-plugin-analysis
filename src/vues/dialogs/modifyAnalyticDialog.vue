@@ -139,6 +139,9 @@ import {
   ATTRIBUTE_PHONE_MESSAGE,
   ATTRIBUTE_SEPARATOR,
   ATTRIBUTE_TRACKING_METHOD,
+  ATTRIBUTE_SEARCH_DEPTH,
+  ATTRIBUTE_STRICT_DEPTH,
+  ATTRIBUTE_SEARCH_RELATIONS,
   ATTRIBUTE_FILTER_VALUE,
   ATTRIBUTE_TIMESERIES,
   ATTRIBUTE_RESULT_NAME,
@@ -264,6 +267,9 @@ export default {
       for(const inputKey of Object.keys(parseInputs)){
         this.inputs[inputKey] = { trackingMethod : parseInputs[inputKey][ATTRIBUTE_TRACKING_METHOD],
                                   filterValue :parseInputs[inputKey][ATTRIBUTE_FILTER_VALUE],
+                                  searchDepth : parseInputs[inputKey][ATTRIBUTE_SEARCH_DEPTH],
+                                  strictDepth : parseInputs[inputKey][ATTRIBUTE_STRICT_DEPTH],
+                                  searchRelations : parseInputs[inputKey][ATTRIBUTE_SEARCH_RELATIONS],
                                   timeseriesIntervalTime : parseInputs[inputKey][ATTRIBUTE_TIMESERIES] };
       }
 
@@ -431,8 +437,7 @@ export default {
     addInput() {
       let length = Object.keys(this.inputs).length;
       console.log('adding input');
-      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 }};
-      //this.inputs[nextInputName] = { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 };
+      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 }};
     },
 
     removeInput(inputName) {
@@ -559,6 +564,17 @@ export default {
         trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_FILTER_VALUE}`,
                   type: 'string',
                   value: this.inputs[inputKey].filterValue });
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_DEPTH}`,
+                  type: 'number',
+                  value: this.inputs[inputKey].searchDepth });
+
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_STRICT_DEPTH}`,
+                  type: 'boolean',
+                  value: this.inputs[inputKey].strictDepth });
+                  
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_RELATIONS}`,
+                  type: 'string',
+                  value: this.inputs[inputKey].searchRelations });
 
         if([TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER,TRACK_METHOD.ENDPOINT_NAME_FILTER].includes(this.inputs[inputKey].trackingMethod) ){
           trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,

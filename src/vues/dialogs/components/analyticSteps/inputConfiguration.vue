@@ -8,6 +8,16 @@
     <md-content class="contents md-scrollbar">
       <p>Each tracking method is an input for an algorithm</p>
       <p>
+        The <b>search depth</b> is how deep the program should search for the tracked item. If 0, only the infered followed entities of
+        the anchor will be considered.
+      </p>
+      <p>
+        If the <b>strict depth</b> is true, the program will only consider the items found at exactly the given depth.
+      </p>
+      <p>
+        The <b>search relations</b> are the relations that the program is allowed to use to find the tracked item.
+      </p>
+      <p>
         Timeseries interval time is how far in the past should the analytic gather data. Must be positive or null. If
         null (equal 0), only the currentValue will be picked, otherwise, the
         data will be picked from the current time at which the analytic will be
@@ -28,21 +38,49 @@
             >
           </md-select>
         </md-field>
+        <md-field class="fixed-size-field"  v-if="value.trackingMethod != ''">
+          <label> Search Depth </label>
+          <md-input type="number" min="0" v-model="value.searchDepth"></md-input>
+        </md-field>
         <md-button
           class="md-primary"
           :disabled="isShowAvailableDataDisabled(value)"
-          @click="getPreviewData(value)"
+          @click="scanRelations(value)"
+        >
+          Scan relations
+        </md-button>
+  
+        <md-button
+          class="md-primary"
+          :disabled="isShowAvailableDataDisabled(value)"
+          @click="getPreviewAvailableData(value)"
         >
           Show available data
         </md-button>
+
+        <md-field class="fixed-size-field"  v-if="value.trackingMethod != '' && value.searchDepth>0" >
+          <label> 
+            Search Relations separated by comma (example: hasBimObject,relation2,... )
+          </label>
+          <md-input v-model="value.searchRelations"></md-input>
+        </md-field>
+        
+
         <md-field class="fixed-size-field"  v-if="value.trackingMethod != ''">
           <label> Filter Value ( Case sensitive )</label>
           <md-input v-model="value.filterValue"></md-input>
         </md-field>
 
+        <md-switch v-if="value.trackingMethod != '' && value.searchDepth >0"
+          v-model="value.strictDepth"
+        >Data must be found at exactly depth {{value.searchDepth}} : <b> {{value.strictDepth ? 'Yes' : 'No'}} </b> 
+        </md-switch>
+
+        
+
         <md-field class="fixed-size-field"  v-if="showTimeSeriesField(value)">
           <label> Timeseries interval time ( 0 to only take current value )</label>
-          <md-input type="number" v-model="value.timeseriesIntervalTime"></md-input>
+          <md-input type="number" min="0" v-model="value.timeseriesIntervalTime"></md-input>
         </md-field>
         
         <md-button
@@ -86,7 +124,8 @@
 </template>
 
 <script>
-import { TRACK_METHOD, spinalAnalyticService } from 'spinal-model-analysis';
+import { TRACK_METHOD, spinalAnalyticService, ATTRIBUTE_VALUE_SEPARATOR,
+ getChoiceRelationsWithDepth, getAvailableData } from 'spinal-model-analysis';
 import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 import previewDialogVue from '../previewDialog.vue';
 
@@ -101,6 +140,7 @@ export default {
         localInputs : this.inputs,
         showPreviewDialog:false,
         previewData: '',
+        scannedRelations:'',
       
     };
   },
@@ -118,11 +158,15 @@ export default {
     },
 
     async getCapturedInputs(tracking,entity){
+      console.log('Calling getCapturedInputs tracking:' ,tracking)
       const capturedInput =
           await spinalAnalyticService.applyTrackingMethodWithParams(
+            entity,
             tracking.trackingMethod,
             tracking.filterValue,
-            entity
+            tracking.searchDepth,
+            tracking.strictDepth,
+            tracking.searchRelations.split(ATTRIBUTE_VALUE_SEPARATOR)
           );
         if (!capturedInput) return "!! Not found !!";
         console.log('capturedInput :', capturedInput);
@@ -134,15 +178,72 @@ export default {
         return capturedInput.name.get();
     },
 
-    async updatePreviewData(tracking,subEntities,parentEntityName,previewData){
-          for (const subEntity of subEntities) {
-          let subEntityName = subEntity.name.get();
-          subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
-          const capturedInputs = await this.getCapturedInputs(tracking,subEntity);
-          previewData[parentEntityName][subEntityName] = capturedInputs;
-        }
+    async scanRelations(tracking){
+      this.showPreviewDialog = true;
+      this.previewData = '';
+      console.log('Calling scanRelations');
+      
+      const followedEntityInfo = SpinalGraphService.getInfo(
+        this.followedEntity
+      );
+      const previewData = {};
+      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      for (const subEntity of entities) {
+        let subEntityName = subEntity.name.get();
+        subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
+        const relations = await getChoiceRelationsWithDepth(subEntity.id.get(),tracking.searchDepth);
+        previewData[subEntityName] = relations;
+      }
+      this.previewData = previewData;
+
     },
-    async getPreviewData(tracking) {
+
+    async getPreviewAvailableData(tracking){
+      this.showPreviewDialog = true;
+      this.previewData = '';
+      console.log('Calling getPreviewAvailableData');
+      const followedEntityInfo = SpinalGraphService.getInfo(
+        this.followedEntity
+      );
+      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      const previewData = {};
+      for (const subEntity of entities) {
+        let subEntityName = subEntity.name.get();
+        subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
+        const availableData = await getAvailableData(
+          tracking.trackingMethod,
+          subEntity.id.get(),
+          tracking.filterValue,
+          tracking.searchDepth,
+          tracking.strictDepth,
+          tracking.searchRelations.split(ATTRIBUTE_VALUE_SEPARATOR));
+        previewData[subEntityName] = availableData;
+      }
+      this.previewData = previewData;
+    },
+
+    async getPreviewData(tracking){
+      this.showPreviewDialog = true;
+      this.previewData = '';
+      console.log('Calling getPreviewData');
+      const followedEntityInfo = SpinalGraphService.getInfo(
+        this.followedEntity
+      );
+      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      const previewData = {};
+      for (const subEntity of entities) {
+        let subEntityName = subEntity.name.get();
+        subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
+        const capturedInputs = await this.getCapturedInputs(tracking,subEntity);
+        previewData[subEntityName] = capturedInputs;
+      }
+      
+      //this.previewData = JSON.stringify(previewData, null, 2);
+      this.previewData = previewData;
+
+    },
+    
+    /*async getPreviewData2(tracking) {
       this.showPreviewDialog = true;
       this.previewData = '';
       console.log('Calling getPreviewData');
@@ -150,10 +251,12 @@ export default {
       const followedEntityInfo = SpinalGraphService.getInfo(
         this.followedEntity
       );
+
       let followedEntityName = followedEntityInfo.name.get();
       followedEntityName = followedEntityName.replace(/(\r\n|\n|\r)/gm, "");
 
       const previewData = { [followedEntityName]: {} };
+
       if (this.entityType === followedEntityInfo.type.get()) {
         const capturedInputs = await this.getCapturedInputs(tracking,followedEntityInfo);
         previewData[followedEntityName] = capturedInputs;
@@ -168,12 +271,11 @@ export default {
           );
         } else {
           console.log('Getting sub entities through spatial context');
-          const spatialContextId =
-            SpinalGraphService.getContext('spatial').info.id.get();
-            subEntities = await SpinalGraphService.findInContextByType(
-            this.followedEntity,
-            spatialContextId,
-            this.entityType
+          const spatialContextId = SpinalGraphService.getContext('spatial').info.id.get();
+          subEntities = await SpinalGraphService.findInContextByType(
+          this.followedEntity,
+          spatialContextId,
+          this.entityType
           );
         }
 
@@ -183,7 +285,9 @@ export default {
       console.log('previewData :', previewData);
       //this.previewData = JSON.stringify(previewData, null, 2);
       this.previewData = previewData;
-    },
+    },*/
+
+
     closePreviewDialog(){
       this.showPreviewDialog = false;
     },

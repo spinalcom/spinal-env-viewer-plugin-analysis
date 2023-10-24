@@ -145,6 +145,9 @@ import {
   ATTRIBUTE_RESULT_TYPE,
   ATTRIBUTE_ANALYTIC_STATUS,
   ATTRIBUTE_ANALYTIC_DESCRIPTION,
+  ATTRIBUTE_SEARCH_DEPTH,
+  ATTRIBUTE_STRICT_DEPTH,
+  ATTRIBUTE_SEARCH_RELATIONS,
   ATTRIBUTE_TRIGGER_AT_START,
   ATTRIBUTE_TICKET_CONTEXT_ID,
   ATTRIBUTE_TICKET_PROCESS_ID,
@@ -203,7 +206,7 @@ export default {
       analyticName: '',
       analyticDescription:'',
       analyticShouldTriggerAtStart : false,
-      analyticStatus : ANALYTIC_STATUS.INACTIVE,
+      analyticStatus : false,
 
 
       // Inputs -> Followed Entity -> attribute data
@@ -369,8 +372,7 @@ export default {
     addInput() {
       let length = Object.keys(this.inputs).length;
       console.log('adding input');
-      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 }};
-      //this.inputs[nextInputName] = { trackingMethod: '', filterValue: '', timeseriesIntervalTime : 0 };
+      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 }};
     },
 
     removeInput(inputName) {
@@ -497,7 +499,16 @@ export default {
         trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_FILTER_VALUE}`,
                   type: 'string',
                   value: this.inputs[inputKey].filterValue });
-
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_DEPTH}`,
+                  type: 'number',
+                  value: this.inputs[inputKey].searchDepth });
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_STRICT_DEPTH}`,
+                  type: 'boolean',
+                  value: this.inputs[inputKey].strictDepth });
+        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_RELATIONS}`,
+                  type: 'string',
+                  value: this.inputs[inputKey].searchRelations });
+        
         if([TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER,TRACK_METHOD.ENDPOINT_NAME_FILTER].includes(this.inputs[inputKey].trackingMethod) ){
           trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,
                   type: 'number',
