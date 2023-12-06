@@ -12,7 +12,6 @@
                :title="'Contexts'"
                :data="data"
                :itemSelected="contextSelected"
-               @create="createContext"
                @select="selectContext"
             ></link-template>
          </div>
@@ -22,7 +21,6 @@
                :title="'Categories'"
                :data="categories"
                :itemSelected="categorySelected"
-               @create="createCategory"
                @select="selectCategory"
                :disableBtn="!contextSelected"
             ></link-template>
@@ -34,7 +32,6 @@
                :title="'Groups'"
                :data="groups"
                :itemSelected="groupSelected"
-               @create="createGroup"
                @select="selectGroup"
                :disableBtn="!categorySelected"
             ></link-template>
@@ -135,32 +132,6 @@ export default {
             this.categorySelected &&
             this.groupSelected
          );
-      },
-
-      createContext() {
-         spinalPanelManagerService.openPanel("createGroupContextDialog", {
-            title: "Create a Grouping Context",
-            typePreselected: this.type,
-            callback: (id) => (this.contextSelected = id),
-         });
-      },
-
-      createCategory() {
-         spinalPanelManagerService.openPanel("createCategoryDialog", {
-            title: "add Category",
-            contextId: this.contextSelected,
-            selectedNode: SpinalGraphService.getInfo(this.contextSelected),
-            callback: (id) => (this.categorySelected = id),
-         });
-      },
-
-      createGroup() {
-         spinalPanelManagerService.openPanel("createGroupDialog", {
-            title: "add Group",
-            contextId: this.contextSelected,
-            selectedNode: SpinalGraphService.getInfo(this.categorySelected),
-            callback: (id) => (this.groupSelected = id),
-         });
       },
 
       //////////////////////////////////////////////////////////////////

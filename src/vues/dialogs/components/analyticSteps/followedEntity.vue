@@ -31,10 +31,24 @@
         >
           Follow spatial entity
         </md-button>
+
+        <md-button
+        @click="showSelectContextEntityDialog = true"
+        > Follow Context </md-button>
+
+
       </div>
 
-      <link-to-entity
+
+      <link-to-context
         v-if="entityType"
+        :visible="showSelectContextEntityDialog"
+        :entityType="entityType"
+        @closeSelection="closeSelectContextEntityDialog"
+      />
+
+      <link-to-entity
+        v-if="entityType && entityType != 'MonitoringServiceOrgan'"
         :visible="showSelectGroupEntityDialog"
         :entityType="
           entityType.includes('Group') ? entityType : entityType + 'Group'
@@ -43,7 +57,7 @@
       />
 
       <link-to-spatial-entity
-        v-if="entityType"
+        v-if="entityType && entityType != 'MonitoringServiceOrgan'"
         :visible="showSelectSpatialEntityDialog"
         :entityType="entityType"
         @closeSelection="closeSelectSpatialEntityDialog"
@@ -55,6 +69,7 @@
 <script>
 import linkToEntityVue from '../linkToEntity.vue';
 import linkToSpatialEntityVue from '../linkToSpatialEntity.vue';
+import linkToContextVue from '../linkToContext.vue';
 import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 
 export default {
@@ -62,12 +77,14 @@ export default {
   components: {
     'link-to-entity': linkToEntityVue,
     'link-to-spatial-entity': linkToSpatialEntityVue,
+    'link-to-context': linkToContextVue,
   },
   data() {
     return {
       localFollowedEntity: this.followedEntity,
       showSelectSpatialEntityDialog: false,
       showSelectGroupEntityDialog: false,
+      showSelectContextEntityDialog: false,
     };
   },
   methods: {
@@ -81,6 +98,11 @@ export default {
       console.log('selected Entity :', selectedGroup);
       this.$emit('update:followedEntity', selectedGroup);
       this.showSelectGroupEntityDialog = false;
+    },
+    closeSelectContextEntityDialog(selectedEntity) {
+      console.log('selected Entity :', selectedEntity);
+      this.$emit('update:followedEntity', selectedEntity);
+      this.showSelectContextEntityDialog = false;
     },
   },
   computed: {

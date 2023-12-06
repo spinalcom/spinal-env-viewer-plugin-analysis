@@ -227,6 +227,10 @@ export default class SpinalAttributeService {
     })
 
   }
+  async getAllContexts(){
+    const contexts = await SpinalGraphService.getGraph().getChildren("hasContext");
+    return contexts.map(el => SpinalGraphService.getInfo(el.info.id.get()));
+  }
 
   async getCategory(contextId) {
     const categories = await groupManagerService.getCategories(contextId)
