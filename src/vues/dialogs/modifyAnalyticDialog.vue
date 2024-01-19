@@ -72,6 +72,8 @@
           v-bind:ticketProcessId.sync="ticketProcessId"
           v-bind:phoneNumber.sync="phoneNumber"
           v-bind:phoneMessage.sync="phoneMessage"
+          v-bind:gChatMessage.sync="gChatMessage"
+          v-bind:gChatSpaceName.sync="gChatSpaceName"
           v-bind:alarmPriority.sync="alarmPriority">
         </result-configuration>
 
@@ -135,6 +137,9 @@ import {
   CATEGORY_ATTRIBUTE_IO_DEPENDENCIES,
   CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS,
   CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING,
+  CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS,
+  ATTRIBUTE_GCHAT_MESSAGE,
+  ATTRIBUTE_GCHAT_SPACE,
   ATTRIBUTE_PHONE_NUMBER,
   ATTRIBUTE_PHONE_MESSAGE,
   ATTRIBUTE_SEPARATOR,
@@ -233,6 +238,8 @@ export default {
       phoneNumber:'',
       phoneMessage:'',
       alarmPriority: null,
+      gChatMessage : '',
+      gChatSpaceName : '',
       
       selectedNode: undefined,
       entityType: undefined,
@@ -322,6 +329,12 @@ export default {
         this.phoneNumber = smsAttributes[ATTRIBUTE_PHONE_NUMBER];
         this.phoneMessage = smsAttributes[ATTRIBUTE_PHONE_MESSAGE];
       }
+
+      if([ANALYTIC_RESULT_TYPE.GCHAT_MESSAGE,ANALYTIC_RESULT_TYPE.GCHAT_ORGAN_CARD].includes(this.resultType)){
+        const gChatAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS);
+        this.gChatMessage = gChatAttributes[ATTRIBUTE_GCHAT_MESSAGE];
+        this.gChatSpaceName = gChatAttributes[ATTRIBUTE_GCHAT_SPACE];
+      }
       const ioAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_IO_DEPENDENCIES);
       for(const ioDependencyName of Object.keys(ioAttributes)){
         let ioDependencyValue = ioAttributes[ioDependencyName].split(ATTRIBUTE_VALUE_SEPARATOR);
@@ -394,6 +407,13 @@ export default {
           configAttributes[
             CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS
           ] = smsAttributes;
+        };
+
+        if([ANALYTIC_RESULT_TYPE.GCHAT_MESSAGE,ANALYTIC_RESULT_TYPE.GCHAT_ORGAN_CARD].includes(this.resultType)){
+          const gChatAttributes = this.getGChatAttributes();
+          configAttributes[
+            CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS
+          ] = gChatAttributes;
         };
 
         const ioAttributes = this.getIOAttributes();
@@ -684,6 +704,21 @@ export default {
         value: this.phoneMessage,
       });
       return smsAttributes;
+    },
+
+    getGChatAttributes(){
+      const gChatAttributes = [];
+      gChatAttributes.push({
+        name: `${ATTRIBUTE_GCHAT_MESSAGE}`,
+        type: 'string',
+        value: this.gChatMessage,
+      });
+      gChatAttributes.push({
+        name: `${ATTRIBUTE_GCHAT_SPACE}`,
+        type: 'string',
+        value: this.gChatSpaceName,
+      });
+      return gChatAttributes;
     },
 
     getIOAttributes(){

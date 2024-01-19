@@ -86,6 +86,24 @@
           ></md-input>
         </md-field>
       </div>
+
+      <div v-if="requireGChatInformation">
+        <md-field class="fixed-size-field">
+          <label>Google chat space name</label>
+          <md-input
+           @change="update('gChatSpaceName',localGChatSpaceName)"
+            v-model="localGChatSpaceName"
+          ></md-input>
+        </md-field>
+        <md-field class="fixed-size-field">
+          <label>Google chat message</label>
+          <md-input
+           @change="update('gChatMessage',localGChatMessage)"
+           type="text"
+            v-model="localGChatMessage"
+          ></md-input>
+        </md-field>
+      </div>
     </md-content>
   </md-step>
 </template>
@@ -107,7 +125,9 @@ export default {
     'ticketProcessId',
     'alarmPriority',
     'phoneNumber',
-    'phoneMessage'
+    'phoneMessage',
+    'gChatMessage',
+    'gChatSpaceName'
   ],
   components: {},
   data() {
@@ -120,6 +140,8 @@ export default {
       localAlarmPriority: this.alarmPriority,
       localPhoneNumber: this.phoneNumber,
       localPhoneMessage: this.phoneMessage,
+      localGChatMessage: this.gChatMessage,
+      localGChatSpaceName: this.gChatSpaceName,
       ticketProcesses: [],
       
     };
@@ -162,7 +184,13 @@ export default {
 
     requirePhoneInformation(){
       return this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.SMS
+    },
+
+    requireGChatInformation(){
+      return [this.CONST_ANALYTIC_RESULT_TYPE.GCHAT_MESSAGE, this.CONST_ANALYTIC_RESULT_TYPE.GCHAT_ORGAN_CARD].includes(this.localResultType)
     }
+
+    
   },
 
   watch: {
@@ -178,6 +206,18 @@ export default {
     },
     ticketProcessId() {
       this.localTicketProcessId = this.ticketProcessId;
+    },
+    gChatMessage(){
+      this.localGChatMessage = this.gChatMessage;
+    },
+    gChatSpaceName(){
+      this.localGChatSpaceName = this.gChatSpaceName;
+    },
+    phoneNumber(){
+      this.localPhoneNumber = this.phoneNumber;
+    },
+    phoneMessage(){
+      this.localPhoneMessage = this.phoneMessage;
     },
     alarmPriority() {
       this.localAlarmPriority = this.alarmPriority;
