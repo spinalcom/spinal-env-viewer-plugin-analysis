@@ -12,6 +12,7 @@
     "spinal-env-viewer-context-menu-service": "git+https://github.com/spinalcom/spinal-env-viewer-context-menu-service.git",
     "spinal-env-viewer-graph-service": "git+https://github.com/spinalcom/Spinal-Graph-Service.git",
     "spinal-env-viewer-plugin-group-manager-service": "git+https://github.com/spinalcom/spinal-env-viewer-plugin-group-manager-service.git",
+    "spinal-model-analysis":"git+https://github.com/spinalcom/spinal-model-analysis.git",
     "vue-color": "^2.7.0",
     "vue-virtual-scroller": "^1.0.10"
   },
