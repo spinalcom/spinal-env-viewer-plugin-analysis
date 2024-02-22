@@ -161,7 +161,7 @@ import {
   ANALYTIC_RESULT_TYPE,
   ANALYTIC_STATUS,
   TRACK_METHOD,
-  algos,
+  ALGORITHMS
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
@@ -306,7 +306,7 @@ export default {
       const algorithmParametersAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS);
       for(const algorithmIndexName of Object.keys(this.algorithms)){
         let algoName = this.algorithms[algorithmIndexName].name;
-        const doc = algos[algoName].requiredParams;
+        const doc = ALGORITHMS[algoName].requiredParams;
         for(let i = 0 ; i<doc.length; i++){
           this.algorithms[algorithmIndexName].params.push(algorithmParametersAttributes[`${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`]);
         }

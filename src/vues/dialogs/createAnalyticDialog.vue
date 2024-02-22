@@ -160,9 +160,8 @@ import {
   ATTRIBUTE_VALUE_SEPARATOR,
   ANALYTIC_RESULT_TYPE,
   TRACK_METHOD,
-  algos,
-  ANALYTIC_STATUS,
-  TRIGGER_TYPE
+  ALGORITHMS,
+  ANALYTIC_STATUS
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
@@ -572,7 +571,7 @@ export default {
       const algorithmParametersAttributes = [];
       for (const algorithmIndexName of Object.keys(this.algorithms)) {
         let algoName = this.algorithms[algorithmIndexName].name;
-        const doc = algos[algoName].requiredParams;
+        const doc = ALGORITHMS[algoName].requiredParams;
         for(let i = 0 ; i<this.algorithms[algorithmIndexName].params.length; i++){
           algorithmParametersAttributes.push({
             name: `${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`,

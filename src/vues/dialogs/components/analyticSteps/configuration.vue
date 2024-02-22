@@ -22,13 +22,13 @@
       <div v-if="algorithm != ''">
         <p>
           <strong> Description : </strong>
-          {{ algos[algorithm].description }}</p
+          {{ ALGORITHMS[algorithm].description }}</p
         >
       </div>
 
       <!-- Algorithm Parameters -->
       <div v-if="algorithm != ''">
-        <div v-if="algos[algorithm].requiredParams == 'boolean'">
+        <div v-if="ALGORITHMS[algorithm].requiredParams == 'boolean'">
           <div
           class="fixed-size-field"
           v-for="(item, index) of inputs"
@@ -43,7 +43,7 @@
           </md-radio>
         </div>
         </div>
-        <div v-else-if="algos[algorithm].requiredParams == 'number'">
+        <div v-else-if="ALGORITHMS[algorithm].requiredParams == 'number'">
           <md-field
             class="fixed-size-field"
             v-for="(item, index) of inputs"
@@ -57,7 +57,7 @@
             ></md-input>
           </md-field>
         </div>
-        <div v-else-if="algos[algorithm].requiredParams == 'string'">
+        <div v-else-if="ALGORITHMS[algorithm].requiredParams == 'string'">
           <md-field
             class="fixed-size-field"
             v-for="(item, index) of inputs"
@@ -74,7 +74,7 @@
         <div v-else>
           <md-field
             class="fixed-size-field"
-            v-for="(item, index) in algos[algorithm].requiredParams"
+            v-for="(item, index) in ALGORITHMS[algorithm].requiredParams"
             :key="index"
           >
             <label>{{ item.name }}, {{ item.description }}</label>
@@ -170,7 +170,7 @@
 <script>
 import {
   ANALYTIC_RESULT_TYPE,
-  algos
+  ALGORITHMS
 } from 'spinal-model-analysis';
 
 export default {
@@ -220,10 +220,10 @@ export default {
   },
   computed: {
     algo_names() {
-      return Object.values(algos);
+      return Object.values(ALGORITHMS);
     },
-    algos() {
-      return algos;
+    ALGORITHMS() {
+      return ALGORITHMS;
     },
 
     requireTicketLocalization() {

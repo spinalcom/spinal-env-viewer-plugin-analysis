@@ -27,13 +27,13 @@
         <div v-if="algorithms[algorithmIndexName].name != ''">
         <p>
           <strong> Description : </strong>
-          {{ algos[algorithms[algorithmIndexName].name].description }}</p
+          {{ ALGORITHMS[algorithms[algorithmIndexName].name].description }}</p
         >
         </div>
 
       <!-- 
       <div v-if="algorithm != ''">
-        <div v-if="algos[algorithm].requiredParams == 'boolean'">
+        <div v-if="ALGORITHMS[algorithm].requiredParams == 'boolean'">
           <div
           class="fixed-size-field"
           v-for="(item, index) of inputs"
@@ -48,7 +48,7 @@
           </md-radio>
         </div>
         </div>
-        <div v-else-if="algos[algorithm].requiredParams == 'number'">
+        <div v-else-if="ALGORITHMS[algorithm].requiredParams == 'number'">
           <md-field
             class="fixed-size-field"
             v-for="(item, index) of inputs"
@@ -62,7 +62,7 @@
             ></md-input>
           </md-field>
         </div>
-        <div v-else-if="algos[algorithm].requiredParams == 'string'">
+        <div v-else-if="ALGORITHMS[algorithm].requiredParams == 'string'">
           <md-field
             class="fixed-size-field"
             v-for="(item, index) of inputs"
@@ -80,7 +80,7 @@
         <div v-if="algorithms[algorithmIndexName].name != ''">
           <md-field
             class="fixed-size-field"
-            v-for="(item, index) in algos[algorithms[algorithmIndexName].name].requiredParams"
+            v-for="(item, index) in ALGORITHMS[algorithms[algorithmIndexName].name].requiredParams"
             :key="index"
           >
             <label>{{ item.name }}, {{ item.description }}</label>
@@ -111,7 +111,7 @@
 </template>
 
 <script>
-import { algos} from 'spinal-model-analysis';
+import { ALGORITHMS} from 'spinal-model-analysis';
 
 export default {
   props: ['STEPPERS_DATA', 'stepper','entityType','followedEntity'
@@ -124,7 +124,7 @@ export default {
     };
   },
   created() {
-    this.algos = algos;
+    this.ALGORITHMS = ALGORITHMS;
   },
   methods: {
     addAlgorithm() {
@@ -141,7 +141,7 @@ export default {
   },
   computed: {
     algo_names() {
-      return Object.values(algos);
+      return Object.values(ALGORITHMS);
     },
   },
 
