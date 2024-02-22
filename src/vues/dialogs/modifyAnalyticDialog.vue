@@ -645,7 +645,7 @@ export default {
       const algorithmParametersAttributes = [];
       for (const algorithmIndexName of Object.keys(this.algorithms)) {
         let algoName = this.algorithms[algorithmIndexName].name;
-        const doc = algos[algoName].requiredParams;
+        const doc = ALGORITHMS[algoName].requiredParams;
         for(let i = 0 ; i<this.algorithms[algorithmIndexName].params.length; i++){
           algorithmParametersAttributes.push({
             name: `${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`,
