@@ -104,11 +104,13 @@
     </md-dialog-content>
 
     <md-dialog-actions>
-      <md-button class="md-primary" @click="closeDialog(false)"
-        >Close</md-button
-      >
+       <md-button class="md-accent" @click="deleteAnalytic">Delete Analytic</md-button>
+      <div>
 
-      <md-button
+        <md-button class="md-primary" @click="closeDialog(false)"
+        >Close</md-button
+        >
+         <md-button
         class="md-primary"
         v-if="stepper.active !== this.STEPPERS_DATA.summary"
         @click="PassToNextStep"
@@ -121,6 +123,13 @@
         @click="closeDialog(true)"
         >Save</md-button
       >
+      </div>
+      
+     
+
+      
+
+     
     </md-dialog-actions>
   </md-dialog>
 </template>
@@ -356,9 +365,6 @@ export default {
         if(!followedEntityNodeRef){
           await spinalAnalyticService.addInputLinkToFollowedEntity(contextId,this.selectedNode.id.get(), this.followedEntity);
         }
-
-
-
         const trackingMethodAttributes = this.getTrackingMethodAttributes();
         console.log('trackingMethodAttributes :', trackingMethodAttributes);
         const trackingMethodNodeRef = await spinalAnalyticService.getTrackingMethod(
@@ -427,8 +433,16 @@ export default {
         ] = triggerAttributes;
 
 
+        await spinalAnalyticService.deleteConfigNode(this.selectedNode.id.get());
 
-        const configNodeRef = await spinalAnalyticService.getConfig(
+        const configInfo = await spinalAnalyticService.addConfig(
+          configAttributes,
+          this.selectedNode.id.get(),
+          contextId
+        );
+
+
+        /*const configNodeRef = await spinalAnalyticService.getConfig(
           this.selectedNode.id.get()
         );
         const configNode = SpinalGraphService.getRealNode(
@@ -437,7 +451,7 @@ export default {
         await spinalAnalyticService.addAttributesToNode(
           configNode,
           configAttributes
-        );
+        );*/
         
         
       }
@@ -452,6 +466,11 @@ export default {
           analyticName: this.analyticName,
         });
       }
+    },
+
+    deleteAnalytic(){
+      spinalAnalyticService.deleteAnalytic(this.selectedNode.id.get());
+      this.closeDialog(false)
     },
 
     addInput() {
@@ -782,6 +801,8 @@ export default {
 }
 
 .md-dialog-actions {
+  display: flex;
+  justify-content: space-between;
   padding: 8px 16px; /* Add this line */
   margin: 0; /* Add this line */
 }
@@ -795,6 +816,7 @@ export default {
   padding: 10px 0px;
   overflow: auto;
 }
+
 </style>
 
 <style>
