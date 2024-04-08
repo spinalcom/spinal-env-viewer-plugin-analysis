@@ -19,6 +19,7 @@
           v-bind:analyticName.sync="analyticName"
           v-bind:analyticDescription.sync="analyticDescription"
           v-bind:analyticShouldTriggerAtStart.sync="analyticShouldTriggerAtStart"
+          v-bind:analyticShouldCatchUpPastExecutions.sync="analyticShouldCatchUpPastExecutions"
           v-bind:analyticStatus.sync="analyticStatus"
           :editable="false"
         ></analytic-name>
@@ -105,6 +106,8 @@
 
     <md-dialog-actions>
        <md-button class="md-accent" @click="deleteAnalytic">Delete Analytic</md-button>
+       <md-button class="md-primary" @click="updateLastExecutionTime"> Force update last execution time </md-button>  
+
       <div>
 
         <md-button class="md-primary" @click="closeDialog(false)"
@@ -167,6 +170,9 @@ import {
   ATTRIBUTE_TICKET_PROCESS_ID,
   ATTRIBUTE_ALARM_PRIORITY,
   ATTRIBUTE_VALUE_SEPARATOR,
+  ATTRIBUTE_LAST_EXECUTION_TIME,
+  ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS,
+  ATTRIBUTE_TIMESERIES_VALUE_AT_START,
   ANALYTIC_RESULT_TYPE,
   ANALYTIC_STATUS,
   TRACK_METHOD,
@@ -220,7 +226,9 @@ export default {
       analyticName: '',
       analyticDescription:'',
       analyticShouldTriggerAtStart : undefined,
+      analyticShouldCatchUpPastExecutions : undefined,
       analyticStatus : undefined,
+      analyticLastExecutionTime: undefined,
 
 
       // Inputs -> Followed Entity -> attribute data
@@ -286,7 +294,8 @@ export default {
                                   searchDepth : parseInputs[inputKey][ATTRIBUTE_SEARCH_DEPTH],
                                   strictDepth : parseInputs[inputKey][ATTRIBUTE_STRICT_DEPTH],
                                   searchRelations : parseInputs[inputKey][ATTRIBUTE_SEARCH_RELATIONS],
-                                  timeseriesIntervalTime : parseInputs[inputKey][ATTRIBUTE_TIMESERIES] };
+                                  timeseriesIntervalTime : parseInputs[inputKey][ATTRIBUTE_TIMESERIES],
+                                  timeseriesValueAtStart :  parseInputs[inputKey][ATTRIBUTE_TIMESERIES_VALUE_AT_START]};
       }
 
       this.inputs = { ...this.inputs };
@@ -298,6 +307,8 @@ export default {
       this.analyticDescription = analyticAttributes[ATTRIBUTE_ANALYTIC_DESCRIPTION];
       this.analyticStatus = analyticAttributes[ATTRIBUTE_ANALYTIC_STATUS]===ANALYTIC_STATUS.ACTIVE;
       this.analyticShouldTriggerAtStart = analyticAttributes[ATTRIBUTE_TRIGGER_AT_START];
+      this.analyticShouldCatchUpPastExecutions = analyticAttributes[ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS];
+      this.analyticLastExecutionTime = analyticAttributes[ATTRIBUTE_LAST_EXECUTION_TIME];
       const triggerAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS);
       for(const triggerKey of Object.keys(triggerAttributes)){
         let triggerValue = triggerAttributes[triggerKey].split(ATTRIBUTE_VALUE_SEPARATOR);
@@ -473,10 +484,15 @@ export default {
       this.closeDialog(false)
     },
 
+    updateLastExecutionTime(){
+      this.analyticLastExecutionTime = spinalAnalyticService.updateLastExecutionTime(this.selectedNode.id.get());
+      this.closeDialog(false);
+    },
+    
     addInput() {
       let length = Object.keys(this.inputs).length;
       console.log('adding input');
-      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 }};
+      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0, timeseriesValueAtStart : false }};
     },
 
     removeInput(inputName) {
@@ -619,6 +635,9 @@ export default {
           trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,
                   type: 'number',
                   value: this.inputs[inputKey].timeseriesIntervalTime });
+          trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES_VALUE_AT_START}`,
+                  type: 'boolean',
+                  value: this.inputs[inputKey].timeseriesValueAtStart });
         }
         
       }
@@ -641,6 +660,16 @@ export default {
         name: `${ATTRIBUTE_TRIGGER_AT_START}`,
         type: 'boolean',
         value: this.analyticShouldTriggerAtStart,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS}`,
+        type: 'boolean',
+        value: this.analyticShouldCatchUpPastExecutions,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_LAST_EXECUTION_TIME}`,
+        type: 'number',
+        value: this.analyticLastExecutionTime,
       });
       return analyticAttributes;
     },
@@ -786,6 +815,12 @@ export default {
 
 .mdDialog .mdDialogTitle {
   text-align: center;
+}
+
+.md-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
 }
 
 .mdDialog .mdDialogContainer {

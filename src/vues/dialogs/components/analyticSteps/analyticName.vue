@@ -22,11 +22,15 @@
           v-model="localAnalyticDescription"
         ></md-input>
       </md-field>
-
         <md-switch
           @change="update('analyticShouldTriggerAtStart',localAnalyticShouldTriggerAtStart)"
           v-model="localAnalyticShouldTriggerAtStart"
         >Should force trigger at start : <b>{{ localAnalyticShouldTriggerAtStart ? 'Yes': 'No'}} </b> </md-switch>
+        
+        <md-switch
+          @change="update('analyticShouldCatchUpPastExecutions',localAnalyticShouldCatchUpPastExecutions)"
+          v-model="localAnalyticShouldCatchUpPastExecutions"
+        >Should catch up missed executions (only works for timeseries based calculations and cron or interval time triggers ) : <b>{{ localAnalyticShouldCatchUpPastExecutions ? 'Yes': 'No'}} </b> </md-switch>
 
         <md-switch
           @change="update('analyticStatus',localAnalyticStatus)"
@@ -46,6 +50,7 @@ export default {
     'analyticName',
     'analyticDescription',
     'analyticShouldTriggerAtStart',
+    'analyticShouldCatchUpPastExecutions',
     'analyticStatus',
     'editable',
   ],
@@ -54,6 +59,7 @@ export default {
       localAnalyticName: this.analyticName,
       localAnalyticDescription: this.analyticDescription,
       localAnalyticShouldTriggerAtStart: this.analyticShouldTriggerAtStart,
+      localAnalyticShouldCatchUpPastExecutions : this.analyticShouldCatchUpPastExecutions,
       localAnalyticStatus: this.analyticStatus,
       statuSwitchValue : this.computedStatuSwitchValue,
     };
@@ -69,7 +75,8 @@ export default {
 
     computedStatuSwitchValue () {
       return this.localAnalyticStatus === ANALYTIC_STATUS.ACTIVE;
-    }
+    },
+
   },
   methods: {
     update(key, value) {
@@ -86,6 +93,9 @@ export default {
     },
     analyticShouldTriggerAtStart() {
       this.localAnalyticShouldTriggerAtStart = this.analyticShouldTriggerAtStart;
+    },
+    analyticShouldCatchUpPastExecutions() {
+      this.localAnalyticShouldCatchUpPastExecutions = this.analyticShouldCatchUpPastExecutions;
     },
     analyticStatus() {
       this.localAnalyticStatus = this.analyticStatus;

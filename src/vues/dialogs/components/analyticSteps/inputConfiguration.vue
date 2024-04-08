@@ -82,6 +82,7 @@
           <label> Timeseries interval time ( 0 to only take current value )</label>
           <md-input type="number" min="0" v-model="value.timeseriesIntervalTime"></md-input>
         </md-field>
+        <md-switch v-if="showLastTimeseriesSwitch(value)" v-model="value.timeseriesValueAtStart"> Should inject last timeseries value at start of interval time : <b>{{ value.timeseriesValueAtStart ? 'Yes': 'No'}} </b> </md-switch>
         
         <md-button
           class="md-primary"
@@ -243,51 +244,6 @@ export default {
 
     },
     
-    /*async getPreviewData2(tracking) {
-      this.showPreviewDialog = true;
-      this.previewData = '';
-      console.log('Calling getPreviewData');
-
-      const followedEntityInfo = SpinalGraphService.getInfo(
-        this.followedEntity
-      );
-
-      let followedEntityName = followedEntityInfo.name.get();
-      followedEntityName = followedEntityName.replace(/(\r\n|\n|\r)/gm, "");
-
-      const previewData = { [followedEntityName]: {} };
-
-      if (this.entityType === followedEntityInfo.type.get()) {
-        const capturedInputs = await this.getCapturedInputs(tracking,followedEntityInfo);
-        previewData[followedEntityName] = capturedInputs;
-      } else {
-        const isGroup = followedEntityInfo.type.get().includes('Group');
-        let subEntities;
-        if (isGroup) {
-          const relationNameToSubEntities = 'groupHas' + this.entityType;
-          subEntities = await SpinalGraphService.getChildren(
-            followedEntityInfo.id.get(),
-            [relationNameToSubEntities]
-          );
-        } else {
-          console.log('Getting sub entities through spatial context');
-          const spatialContextId = SpinalGraphService.getContext('spatial').info.id.get();
-          subEntities = await SpinalGraphService.findInContextByType(
-          this.followedEntity,
-          spatialContextId,
-          this.entityType
-          );
-        }
-
-        await this.updatePreviewData(tracking,subEntities, followedEntityName, previewData);
-      }
-
-      console.log('previewData :', previewData);
-      //this.previewData = JSON.stringify(previewData, null, 2);
-      this.previewData = previewData;
-    },*/
-
-
     closePreviewDialog(){
       this.showPreviewDialog = false;
     },
@@ -309,6 +265,9 @@ export default {
       return  (tracking.trackingMethod === this.TRACK_METHOD.ENDPOINT_NAME_FILTER ||
        tracking.trackingMethod === this.TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER);
     },
+    showLastTimeseriesSwitch(tracking){
+      return tracking.timeseriesIntervalTime > 0;
+    }
 
   },
   computed: {

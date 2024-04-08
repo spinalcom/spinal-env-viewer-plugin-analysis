@@ -19,6 +19,7 @@
           v-bind:analyticName.sync="analyticName"
           v-bind:analyticDescription.sync="analyticDescription"
           v-bind:analyticShouldTriggerAtStart.sync="analyticShouldTriggerAtStart"
+          v-bind:analyticShouldCatchUpPastExecutions.sync="analyticShouldCatchUpPastExecutions"
           v-bind:analyticStatus.sync="analyticStatus"
           :editable="true"
         ></analytic-name>
@@ -153,11 +154,14 @@ import {
   ATTRIBUTE_SEARCH_DEPTH,
   ATTRIBUTE_STRICT_DEPTH,
   ATTRIBUTE_SEARCH_RELATIONS,
+  ATTRIBUTE_TIMESERIES_VALUE_AT_START,
   ATTRIBUTE_TRIGGER_AT_START,
   ATTRIBUTE_TICKET_CONTEXT_ID,
   ATTRIBUTE_TICKET_PROCESS_ID,
   ATTRIBUTE_ALARM_PRIORITY,
   ATTRIBUTE_VALUE_SEPARATOR,
+  ATTRIBUTE_LAST_EXECUTION_TIME,
+  ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS,
   ANALYTIC_RESULT_TYPE,
   TRACK_METHOD,
   ALGORITHMS,
@@ -210,6 +214,7 @@ export default {
       analyticName: '',
       analyticDescription:'',
       analyticShouldTriggerAtStart : false,
+      analyticShouldCatchUpPastExecutions : false,
       analyticStatus : false,
 
 
@@ -385,7 +390,7 @@ export default {
     addInput() {
       let length = Object.keys(this.inputs).length;
       console.log('adding input');
-      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 }};
+      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 , timeseriesValueAtStart : false }};
     },
 
     removeInput(inputName) {
@@ -526,6 +531,11 @@ export default {
           trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,
                   type: 'number',
                   value: this.inputs[inputKey].timeseriesIntervalTime });
+          trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES_VALUE_AT_START}`,
+                  type: 'boolean',
+                  value: this.inputs[inputKey].timeseriesValueAtStart });
+          
+          
         }
         
       }
@@ -548,6 +558,16 @@ export default {
         name: `${ATTRIBUTE_TRIGGER_AT_START}`,
         type: 'boolean',
         value: this.analyticShouldTriggerAtStart,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS}`,
+        type: 'boolean',
+        value: this.analyticShouldCatchUpPastExecutions,
+      });
+      analyticAttributes.push({
+        name: `${ATTRIBUTE_LAST_EXECUTION_TIME}`,
+        type: 'string',
+        value: Date.now(),
       });
       return analyticAttributes;
     },
@@ -695,7 +715,11 @@ export default {
 .mdDialog .mdDialogTitle {
   text-align: center;
 }
-
+.md-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
 .mdDialog .mdDialogContainer {
   width: 1200px;
   max-width: 1500px;
