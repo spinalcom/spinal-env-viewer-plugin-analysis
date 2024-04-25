@@ -92,50 +92,6 @@ export default {
         this.showSelectionDialog = false;
     },
 
-
-    findExecutionOrder(dependencies ) {
-    const graph = {};
-    const visited = {};
-    const stack = [];
-    const tempStack = []; // for cycle detection
-
-    // Create graph from dependency map
-    for (let algo of Object.keys(dependencies)) {
-        graph[algo] = graph[algo] || [];
-        for (let dep of dependencies[algo]) {
-            graph[dep] = graph[dep] || [];
-            graph[dep].push(algo);
-        }
-    }
-
-    const visit = (node) => {
-        if (tempStack.includes(node)) {
-            return false; // cycle detected
-        }
-        if (!visited[node]) {
-            visited[node] = true;
-            tempStack.push(node);
-            if (graph[node]) {
-                for (let neighbor of graph[node]) {
-                    if (!visit(neighbor)) return false; // propagate cycle detection
-                }
-            }
-            tempStack.pop();
-            stack.push(node);
-        }
-        return true;
-    };
-
-    for (let node of Object.keys(graph)) {
-        if (!visited[node]) {
-            if (!visit(node)) return null; // cycle detected
-        }
-    }
-
-    return stack.filter(x => x.startsWith('A'));
-    },
-
-
     saveSelectedDependencies(selectedItems) {
       console.log("saving selected dependencies : ", selectedItems)
       console.log(" to ", this.selectedAlgorithm)
@@ -144,8 +100,6 @@ export default {
       this.ioDependencies[this.selectedAlgorithm]=indexNames;
 
       console.log("ioDependencies : ", this.ioDependencies)
-      const executionOrder = this.findExecutionOrder(this.ioDependencies)
-      console.log("executionOrder : ", executionOrder)
     },
 
     

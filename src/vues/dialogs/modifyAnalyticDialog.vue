@@ -68,7 +68,9 @@
           :inputs="inputs"
           v-bind:resultName.sync="resultName"
           v-bind:resultType.sync="resultType"
-          v-bind:intervalTime.sync="intervalTime"
+          v-bind:shouldCreateEndpointIfNotExist.sync="shouldCreateEndpointIfNotExist"
+          v-bind:endpointCreationUnit.sync="endpointCreationUnit"
+          v-bind:endpointCreationMaxDays.sync="endpointCreationMaxDays"
           v-bind:ticketContextId.sync="ticketContextId"
           v-bind:ticketProcessId.sync="ticketProcessId"
           v-bind:phoneNumber.sync="phoneNumber"
@@ -141,6 +143,7 @@
 import {
   spinalAnalyticService,
   CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
+  CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS,
   CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
   CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
   CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
@@ -176,7 +179,10 @@ import {
   ANALYTIC_RESULT_TYPE,
   ANALYTIC_STATUS,
   TRACK_METHOD,
-  ALGORITHMS
+  ALGORITHMS,
+  ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST,
+  ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS,
+  ATTRIBUTE_CREATE_ENDPOINT_UNIT
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
@@ -249,7 +255,10 @@ export default {
 
       // Config -> Result attribute data
       resultType : '',
-      resultName : '', 
+      resultName : '',
+      shouldCreateEndpointIfNotExist : false,
+      endpointCreationUnit : '',
+      endpointCreationMaxDays : null, 
       ticketContextId: '',
       ticketProcessId: '',
       phoneNumber:'',
@@ -336,6 +345,8 @@ export default {
       const resultAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_RESULT_PARAMETERS);
       this.resultType = resultAttributes[ATTRIBUTE_RESULT_TYPE];
       this.resultName = resultAttributes[ATTRIBUTE_RESULT_NAME];
+      this.shouldCreateEndpointIfNotExist = resultAttributes[ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST];
+
       if ([ANALYTIC_RESULT_TYPE.TICKET,ANALYTIC_RESULT_TYPE.ALARM].includes(this.resultType)){
         const ticketAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS);
         this.ticketContextId = ticketAttributes[ATTRIBUTE_TICKET_CONTEXT_ID];
@@ -354,6 +365,12 @@ export default {
         const gChatAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS);
         this.gChatMessage = gChatAttributes[ATTRIBUTE_GCHAT_MESSAGE];
         this.gChatSpaceName = gChatAttributes[ATTRIBUTE_GCHAT_SPACE];
+      }
+
+      if(this.resultType === ANALYTIC_RESULT_TYPE.ENDPOINT){
+        const endpointCreationAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS);
+        this.endpointCreationUnit = endpointCreationAttributes[ATTRIBUTE_CREATE_ENDPOINT_UNIT];
+        this.endpointCreationMaxDays = endpointCreationAttributes[ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS];
       }
       const ioAttributes = await spinalAnalyticService.getAttributesFromNode(configNode.id.get(),CATEGORY_ATTRIBUTE_IO_DEPENDENCIES);
       for(const ioDependencyName of Object.keys(ioAttributes)){
@@ -431,6 +448,13 @@ export default {
           configAttributes[
             CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS
           ] = gChatAttributes;
+        };
+
+        if(this.resultType == ANALYTIC_RESULT_TYPE.ENDPOINT && this.shouldCreateEndpointIfNotExist){
+          const endpointCreationAttributes = this.getEndpointCreationAttributes();
+          configAttributes[
+            CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS
+          ] = endpointCreationAttributes;
         };
 
         const ioAttributes = this.getIOAttributes();
@@ -686,6 +710,13 @@ export default {
         type: 'string',
         value: this.resultName,
       });
+      if(this.resultType === ANALYTIC_RESULT_TYPE.ENDPOINT){
+        resultAttributes.push({
+          name: `${ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST}`,
+          type: 'boolean',
+          value: this.shouldCreateEndpointIfNotExist,
+        });
+      }
       return resultAttributes;
     },
 
@@ -737,6 +768,21 @@ export default {
           });
         }
       return ticketAttributes;
+    },
+
+    getEndpointCreationAttributes(){
+      const endpointCreationAttributes = [];
+      endpointCreationAttributes.push({
+        name: `${ATTRIBUTE_CREATE_ENDPOINT_UNIT}`,
+        type: 'string',
+        value: this.endpointCreationUnit,
+      });
+      endpointCreationAttributes.push({
+        name: `${ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS}`,
+        type: 'number',
+        value: this.endpointCreationMaxDays,
+      });
+      return endpointCreationAttributes;
     },
 
     getSMSAttributes(){
