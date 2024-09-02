@@ -71,7 +71,7 @@ with this file. If not, see
 </template>
 
 <script>
-	import {spinalAnalyticService, ENTITY_TYPES } from "spinal-model-analysis"
+	import {spinalAnalyticNodeManagerService, ENTITY_TYPES } from "spinal-model-analysis"
 
 	export default {
 		name: "createEntityDialog",
@@ -107,7 +107,7 @@ with this file. If not, see
 						entityType: this.types[this.entity.entityType],
 						description: ""
 					};
-					const entityInfo = await spinalAnalyticService.addEntity(newEntity,this.contextId);
+					const entityInfo = await spinalAnalyticNodeManagerService.addEntity(newEntity,this.contextId);
 				}
 				this.showDialog = false;
 			},

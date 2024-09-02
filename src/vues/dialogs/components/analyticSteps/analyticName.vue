@@ -27,22 +27,37 @@
           v-model="localAnalyticShouldTriggerAtStart"
         >Should force trigger at start : <b>{{ localAnalyticShouldTriggerAtStart ? 'Yes': 'No'}} </b> </md-switch>
         
-        <md-switch
+        <!-- <md-switch
           @change="update('analyticShouldCatchUpPastExecutions',localAnalyticShouldCatchUpPastExecutions)"
           v-model="localAnalyticShouldCatchUpPastExecutions"
-        >Should catch up missed executions (only works for timeseries based calculations and cron or interval time triggers ) : <b>{{ localAnalyticShouldCatchUpPastExecutions ? 'Yes': 'No'}} </b> </md-switch>
-
+        >Should catch up missed executions (only works for timeseries based calculations and cron or interval time triggers ) : <b>{{ localAnalyticShouldCatchUpPastExecutions ? 'Yes': 'No'}} </b> </md-switch> -->
         <md-switch
           @change="update('analyticStatus',localAnalyticStatus)"
           v-model="localAnalyticStatus"
         >Analytic Status : <b> {{localAnalyticStatus ? 'Active' : 'Inactive'}} </b> </md-switch>
+
+        
+        <md-field
+            class="fixed-size-field"
+            
+          >
+            <label> Cron syntax </label>
+            <md-input
+             @change="update('analyticAggregateExecution',localAnalyticAggregateExecution)"
+              v-model="localAnalyticAggregateExecution"
+            ></md-input>
+            
+          </md-field>
+          <p>
+          Aggregate Execution to a specific time : (leave empty to disable this feature)
+        </p>
       
     </md-content>
   </md-step>
 </template>
 
 <script>
-import { ANALYTIC_STATUS } from "spinal-model-analysis"
+import { CONSTANTS } from "spinal-model-analysis"
 export default {
   props: [
     'STEPPERS_DATA',
@@ -50,7 +65,8 @@ export default {
     'analyticName',
     'analyticDescription',
     'analyticShouldTriggerAtStart',
-    'analyticShouldCatchUpPastExecutions',
+    //'analyticShouldCatchUpPastExecutions',
+    'analyticAggregateExecution',
     'analyticStatus',
     'editable',
   ],
@@ -59,22 +75,23 @@ export default {
       localAnalyticName: this.analyticName,
       localAnalyticDescription: this.analyticDescription,
       localAnalyticShouldTriggerAtStart: this.analyticShouldTriggerAtStart,
-      localAnalyticShouldCatchUpPastExecutions : this.analyticShouldCatchUpPastExecutions,
+      //localAnalyticShouldCatchUpPastExecutions : this.analyticShouldCatchUpPastExecutions,
+      localAnalyticAggregateExecution: this.analyticAggregateExecution,
       localAnalyticStatus: this.analyticStatus,
       statuSwitchValue : this.computedStatuSwitchValue,
     };
   },
   created() {
-    this.ANALYTIC_STATUS = ANALYTIC_STATUS;
+    this.ANALYTIC_STATUS = CONSTANTS.ANALYTIC_STATUS;
   },
 
   computed : {
     computedAnalyticStatus () {
-      return this.statuSwitchValue ? ANALYTIC_STATUS.ACTIVE : ANALYTIC_STATUS.INACTIVE;
+      return this.statuSwitchValue ? CONSTANTS.ANALYTIC_STATUS.ACTIVE : CONSTANTS.ANALYTIC_STATUS.INACTIVE;
     },
 
     computedStatuSwitchValue () {
-      return this.localAnalyticStatus === ANALYTIC_STATUS.ACTIVE;
+      return this.localAnalyticStatus === CONSTANTS.ANALYTIC_STATUS.ACTIVE;
     },
 
   },
@@ -99,7 +116,9 @@ export default {
     },
     analyticStatus() {
       this.localAnalyticStatus = this.analyticStatus;
-
+    },
+    analyticAggregateExecution() {
+      this.localAnalyticAggregateExecution = this.analyticAggregateExecution;
     },
   },
 };

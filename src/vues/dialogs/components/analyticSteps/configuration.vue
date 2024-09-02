@@ -169,7 +169,7 @@
 
 <script>
 import {
-  ANALYTIC_RESULT_TYPE,
+  CONSTANTS,
   ALGORITHMS
 } from 'spinal-model-analysis';
 
@@ -207,7 +207,7 @@ export default {
     };
   },
   created(){
-    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
+    this.CONST_ANALYTIC_RESULT_TYPE = CONSTANTS.ANALYTIC_RESULT_TYPE;
   },
   methods: {
     update(key, value) {

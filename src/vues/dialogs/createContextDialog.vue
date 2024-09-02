@@ -86,7 +86,7 @@ with this file. If not, see
 
 <script>
 
-import { spinalAnalyticService , ENTITY_TYPES } from "spinal-model-analysis";
+import { spinalAnalyticNodeManagerService , CONSTANTS } from "spinal-model-analysis";
 
 import SortableList from "./components/sortable-list.vue";
 
@@ -119,7 +119,7 @@ export default {
 
     async removed(res) {
       if (res.closeResult){
-        const context = await spinalAnalyticService.createContext(res.inputValue.trim());
+        const context = await spinalAnalyticNodeManagerService.createContext(res.inputValue.trim());
         for (const entity of res.entities){
           console.log("entity :",entity);
           const newEntity = {
@@ -128,7 +128,7 @@ export default {
             entityType: entity.entityType,
             description:""
           }
-          const entityInfo = await spinalAnalyticService.addEntity(newEntity,context.id.get());
+          const entityInfo = await spinalAnalyticNodeManagerService.addEntity(newEntity,context.id.get());
         }
       }
       this.showDialog = false;
@@ -189,13 +189,13 @@ export default {
     addAllStandardEntities(){
       this.entities = [];
       this.entities = [
-        {name: "Building", standard_name: "Building", entityType: ENTITY_TYPES.BUILDING, description: "",order:0},
-        {name: "Floor", standard_name: "Floor", entityType: ENTITY_TYPES.FLOOR, description: "",order:1},
-        {name: "Room", standard_name: "Room", entityType: ENTITY_TYPES.ROOM, description: "",order:2},
-        {name: "Equipment", standard_name: "Equipment", entityType: ENTITY_TYPES.EQUIPMENT, description: "",order:3},
-        {name: "Floor Group", standard_name: "Floor Group", entityType: ENTITY_TYPES.FLOOR_GROUP, description: "",order:4},
-        {name: "Room Group", standard_name: "Room Group", entityType: ENTITY_TYPES.ROOM_GROUP, description: "",order:5},
-        {name: "Equipment Group", standard_name: "Equipment Group", entityType: ENTITY_TYPES.EQUIPMENT_GROUP, description: "",order:6},
+        {name: "Building", standard_name: "Building", entityType: CONSTANTS.ENTITY_TYPES.BUILDING, description: "",order:0},
+        {name: "Floor", standard_name: "Floor", entityType: CONSTANTS.ENTITY_TYPES.FLOOR, description: "",order:1},
+        {name: "Room", standard_name: "Room", entityType: CONSTANTS.ENTITY_TYPES.ROOM, description: "",order:2},
+        {name: "Equipment", standard_name: "Equipment", entityType: CONSTANTS.ENTITY_TYPES.EQUIPMENT, description: "",order:3},
+        {name: "Floor Group", standard_name: "Floor Group", entityType: CONSTANTS.ENTITY_TYPES.FLOOR_GROUP, description: "",order:4},
+        {name: "Room Group", standard_name: "Room Group", entityType: CONSTANTS.ENTITY_TYPES.ROOM_GROUP, description: "",order:5},
+        {name: "Equipment Group", standard_name: "Equipment Group", entityType: CONSTANTS.ENTITY_TYPES.EQUIPMENT_GROUP, description: "",order:6},
       ]
     }
   },

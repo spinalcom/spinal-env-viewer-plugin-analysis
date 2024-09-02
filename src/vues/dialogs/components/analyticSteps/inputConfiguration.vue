@@ -38,6 +38,7 @@
             >
           </md-select>
         </md-field>
+        
         <md-field class="fixed-size-field"  v-if="value.trackingMethod != ''">
           <label> Search Depth </label>
           <md-input type="number" min="0" v-model="value.searchDepth"></md-input>
@@ -59,7 +60,7 @@
         </md-button>
 
         <md-field class="fixed-size-field"  v-if="value.trackingMethod != '' && value.searchDepth>0" >
-          <label> 
+          <label>
             Search Relations separated by comma (example: hasBimObject,relation2,... )
           </label>
           <md-input v-model="value.searchRelations"></md-input>
@@ -70,6 +71,10 @@
           <label> Filter Value ( Case sensitive )</label>
           <md-input v-model="value.filterValue"></md-input>
         </md-field>
+
+        <md-switch v-if="[TRACK_METHOD.ENDPOINT_NAME_FILTER,TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER].includes(value.trackingMethod) && value.timeseriesIntervalTime==0"
+          v-model="value.captureAllModels"
+        >Should capture all models sharing the same name : <b>{{ value.captureAllModels ? 'Yes': 'No'}} </b> </md-switch>
 
         <md-switch v-if="value.trackingMethod != '' && value.searchDepth >0"
           v-model="value.strictDepth"
@@ -125,8 +130,7 @@
 </template>
 
 <script>
-import { TRACK_METHOD, spinalAnalyticService, ATTRIBUTE_VALUE_SEPARATOR,
- getChoiceRelationsWithDepth, getAvailableData } from 'spinal-model-analysis';
+import { CONSTANTS, spinalAnalyticInputManagerService } from 'spinal-model-analysis';
 import { SpinalGraphService } from 'spinal-env-viewer-graph-service';
 import previewDialogVue from '../previewDialog.vue';
 
@@ -146,7 +150,7 @@ export default {
     };
   },
   created() {
-    this.TRACK_METHOD = TRACK_METHOD;
+    this.TRACK_METHOD = CONSTANTS.TRACK_METHOD;
   },
   methods: {
     
@@ -161,13 +165,14 @@ export default {
     async getCapturedInputs(tracking,entity){
       console.log('Calling getCapturedInputs tracking:' ,tracking)
       const capturedInput =
-          await spinalAnalyticService.applyTrackingMethodWithParams(
+          await spinalAnalyticInputManagerService.applyTrackingMethodWithParams(
             entity,
             tracking.trackingMethod,
             tracking.filterValue,
             tracking.searchDepth,
             tracking.strictDepth,
-            tracking.searchRelations.split(ATTRIBUTE_VALUE_SEPARATOR)
+            tracking.searchRelations.split(CONSTANTS.ATTRIBUTE_VALUE_SEPARATOR),
+            tracking.captureAllModels
           );
         if (!capturedInput) return "!! Not found !!";
         console.log('capturedInput :', capturedInput);
@@ -188,11 +193,11 @@ export default {
         this.followedEntity
       );
       const previewData = {};
-      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      const entities  = await spinalAnalyticInputManagerService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
       for (const subEntity of entities) {
         let subEntityName = subEntity.name.get();
         subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
-        const relations = await getChoiceRelationsWithDepth(subEntity.id.get(),tracking.searchDepth);
+        const relations = await spinalAnalyticInputManagerService.getChoiceRelationsWithDepth(subEntity.id.get(),tracking.searchDepth);
         previewData[subEntityName] = relations;
       }
       this.previewData = previewData;
@@ -206,18 +211,18 @@ export default {
       const followedEntityInfo = SpinalGraphService.getInfo(
         this.followedEntity
       );
-      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      const entities  = await spinalAnalyticInputManagerService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
       const previewData = {};
       for (const subEntity of entities) {
         let subEntityName = subEntity.name.get();
         subEntityName = subEntityName.replace(/(\r\n|\n|\r)/gm, "");
-        const availableData = await getAvailableData(
+        const availableData = await spinalAnalyticInputManagerService.getAvailableData(
           tracking.trackingMethod,
           subEntity.id.get(),
           tracking.filterValue,
           tracking.searchDepth,
           tracking.strictDepth,
-          tracking.searchRelations.split(ATTRIBUTE_VALUE_SEPARATOR));
+          tracking.searchRelations.split(CONSTANTS.ATTRIBUTE_VALUE_SEPARATOR));
         previewData[subEntityName] = availableData;
       }
       this.previewData = previewData;
@@ -230,7 +235,7 @@ export default {
       const followedEntityInfo = SpinalGraphService.getInfo(
         this.followedEntity
       );
-      const entities  = await spinalAnalyticService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
+      const entities  = await spinalAnalyticInputManagerService.getWorkingFollowedEntitiesWithParam(followedEntityInfo,this.entityType);
       const previewData = {};
       for (const subEntity of entities) {
         let subEntityName = subEntity.name.get();

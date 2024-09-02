@@ -151,7 +151,7 @@
 </template>
 
 <script>
-import { ANALYTIC_RESULT_TYPE } from 'spinal-model-analysis';
+import { CONSTANTS } from 'spinal-model-analysis';
 
 import { spinalServiceTicket } from 'spinal-service-ticket';
 
@@ -191,7 +191,7 @@ export default {
     };
   },
   created() {
-    this.CONST_ANALYTIC_RESULT_TYPE = ANALYTIC_RESULT_TYPE;
+    this.CONST_ANALYTIC_RESULT_TYPE = CONSTANTS.ANALYTIC_RESULT_TYPE;
     this.alarmContexts = spinalServiceTicket.getContexts();
   },
   methods: {

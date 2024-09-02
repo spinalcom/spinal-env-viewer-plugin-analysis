@@ -2,7 +2,7 @@ import { SpinalContextApp } from "spinal-env-viewer-context-menu-service";
 const { spinalPanelManagerService } = require("spinal-env-viewer-panel-manager-service");
 import { spinalContextMenuService } from "spinal-env-viewer-context-menu-service";
 
-import { ENTITY_TYPE } from "spinal-model-analysis";
+import { CONSTANTS } from "spinal-model-analysis";
 
 const SIDEBAR = "GraphManagerSideBar";
 
@@ -19,7 +19,7 @@ class CreateAnalytic extends SpinalContextApp {
   
     isShown(option) {  
       const id = option.selectedNode.id.get();
-      const isAnalyticEntity = option.selectedNode.type.get() === ENTITY_TYPE;
+      const isAnalyticEntity = option.selectedNode.type.get() === CONSTANTS.ENTITY_TYPE;
       return Promise.resolve(isAnalyticEntity ? true : -1);
     }
   

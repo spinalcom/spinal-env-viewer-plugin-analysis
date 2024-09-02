@@ -60,7 +60,6 @@
 <script>
 import inputSelectionTableVue from './inputSelectionTable.vue';
 import draggable from "vuedraggable";
-import { spinalAnalyticService } from 'spinal-model-analysis'
 
 
 

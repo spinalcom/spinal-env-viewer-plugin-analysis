@@ -2,7 +2,7 @@ import { SpinalContextApp } from "spinal-env-viewer-context-menu-service";
 const { spinalPanelManagerService } = require("spinal-env-viewer-panel-manager-service");
 import { spinalContextMenuService } from "spinal-env-viewer-context-menu-service";
 
-import { ANALYTIC_TYPE } from "spinal-model-analysis";
+import { CONSTANTS } from "spinal-model-analysis";
 
 const SIDEBAR = "GraphManagerSideBar";
 
@@ -19,7 +19,7 @@ class ModifyAnalytic extends SpinalContextApp {
   
     isShown(option) {  
       const id = option.selectedNode.id.get();
-      const isAnalytic = option.selectedNode.type.get() === ANALYTIC_TYPE;
+      const isAnalytic = option.selectedNode.type.get() === CONSTANTS.ANALYTIC_TYPE;
       return Promise.resolve(isAnalytic ? true : -1);
     }
   

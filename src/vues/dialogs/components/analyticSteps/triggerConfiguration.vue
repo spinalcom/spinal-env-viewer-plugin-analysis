@@ -115,7 +115,7 @@
 </template>
 
 <script>
-import { TRIGGER_TYPE } from 'spinal-model-analysis';
+import { CONSTANTS } from 'spinal-model-analysis';
 import cronHelpDialog from '../cronHelpDialog.vue';
 
 export default {
@@ -132,7 +132,7 @@ export default {
     };
   },
   created() {
-    this.TRIGGER_TYPE = TRIGGER_TYPE;
+    this.TRIGGER_TYPE = CONSTANTS.TRIGGER_TYPE;
   },
   methods: {
     addTrigger() {
@@ -144,8 +144,8 @@ export default {
     },
     showInputSelection(triggerType) {
       return [
-        TRIGGER_TYPE.CHANGE_OF_VALUE_WITH_THRESHOLD,
-        TRIGGER_TYPE.CHANGE_OF_VALUE,
+        CONSTANTS.TRIGGER_TYPE.CHANGE_OF_VALUE_WITH_THRESHOLD,
+        CONSTANTS.TRIGGER_TYPE.CHANGE_OF_VALUE,
       ].includes(triggerType);
     },
 

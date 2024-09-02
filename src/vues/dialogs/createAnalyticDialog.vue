@@ -18,13 +18,17 @@
           :stepper="stepper"
           v-bind:analyticName.sync="analyticName"
           v-bind:analyticDescription.sync="analyticDescription"
-          v-bind:analyticShouldTriggerAtStart.sync="analyticShouldTriggerAtStart"
-          v-bind:analyticShouldCatchUpPastExecutions.sync="analyticShouldCatchUpPastExecutions"
+          v-bind:analyticShouldTriggerAtStart.sync="
+            analyticShouldTriggerAtStart
+          "
+          v-bind:analyticAggregateExecution.sync="
+            analyticAggregateExecution
+          "
           v-bind:analyticStatus.sync="analyticStatus"
           :editable="true"
         ></analytic-name>
 
-         <followed-entity
+        <followed-entity
           :STEPPERS_DATA="STEPPERS_DATA"
           :stepper="stepper"
           :entityType="entityType"
@@ -58,9 +62,8 @@
           @addAlgorithm="addAlgorithm"
           @removeAlgorithm="removeAlgorithm"
           v-bind:algorithms.sync="algorithms"
-          >
+        >
         </algorithm-configuration>
-
 
         <result-configuration
           :STEPPERS_DATA="STEPPERS_DATA"
@@ -69,7 +72,9 @@
           v-bind:resultName.sync="resultName"
           v-bind:resultType.sync="resultType"
           v-bind:intervalTime.sync="intervalTime"
-          v-bind:shouldCreateEndpointIfNotExist.sync="shouldCreateEndpointIfNotExist"
+          v-bind:shouldCreateEndpointIfNotExist.sync="
+            shouldCreateEndpointIfNotExist
+          "
           v-bind:endpointCreationUnit.sync="endpointCreationUnit"
           v-bind:endpointCreationMaxDays.sync="endpointCreationMaxDays"
           v-bind:ticketContextId.sync="ticketContextId"
@@ -78,9 +83,9 @@
           v-bind:phoneMessage.sync="phoneMessage"
           v-bind:gChatMessage.sync="gChatMessage"
           v-bind:gChatSpaceName.sync="gChatSpaceName"
-          v-bind:alarmPriority.sync="alarmPriority">
+          v-bind:alarmPriority.sync="alarmPriority"
+        >
         </result-configuration>
-
 
         <io-dependencies
           :STEPPERS_DATA="STEPPERS_DATA"
@@ -88,7 +93,7 @@
           :inputs="inputs"
           :algorithms="algorithms"
           v-bind:ioDependencies.sync="ioDependencies"
-          >
+        >
         </io-dependencies>
 
         <summary-analytic
@@ -103,7 +108,7 @@
           :resultType="resultType"
           :intervalTime="intervalTime"
         >
-        </summary-analytic> 
+        </summary-analytic>
       </md-steppers>
     </md-dialog-content>
 
@@ -131,48 +136,9 @@
 
 <script>
 import {
-  spinalAnalyticService,
-  CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS,
-  CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS,
-  CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS,
-  CATEGORY_ATTRIBUTE_RESULT_PARAMETERS,
-  CATEGORY_ATTRIBUTE_TRACKING_METHOD_PARAMETERS,
-  CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS,
-  CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS,
-  CATEGORY_ATTRIBUTE_IO_DEPENDENCIES,
-  CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS,
-  CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING,
-  CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS,
-  ATTRIBUTE_GCHAT_MESSAGE,
-  ATTRIBUTE_GCHAT_SPACE,
-  ATTRIBUTE_PHONE_NUMBER,
-  ATTRIBUTE_PHONE_MESSAGE,
-  ATTRIBUTE_SEPARATOR,
-  ATTRIBUTE_TRACKING_METHOD,
-  ATTRIBUTE_FILTER_VALUE,
-  ATTRIBUTE_TIMESERIES,
-  ATTRIBUTE_RESULT_NAME,
-  ATTRIBUTE_RESULT_TYPE,
-  ATTRIBUTE_ANALYTIC_STATUS,
-  ATTRIBUTE_ANALYTIC_DESCRIPTION,
-  ATTRIBUTE_SEARCH_DEPTH,
-  ATTRIBUTE_STRICT_DEPTH,
-  ATTRIBUTE_SEARCH_RELATIONS,
-  ATTRIBUTE_TIMESERIES_VALUE_AT_START,
-  ATTRIBUTE_TRIGGER_AT_START,
-  ATTRIBUTE_TICKET_CONTEXT_ID,
-  ATTRIBUTE_TICKET_PROCESS_ID,
-  ATTRIBUTE_ALARM_PRIORITY,
-  ATTRIBUTE_VALUE_SEPARATOR,
-  ATTRIBUTE_LAST_EXECUTION_TIME,
-  ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS,
-  ANALYTIC_RESULT_TYPE,
-  TRACK_METHOD,
-  ALGORITHMS,
-  ANALYTIC_STATUS,
-  ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST,
-  ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS,
-  ATTRIBUTE_CREATE_ENDPOINT_UNIT
+  spinalAnalyticNodeManagerService,
+  CONSTANTS,
+  ALGORITHMS
 } from 'spinal-model-analysis';
 
 import analyticNameVue from './components/analyticSteps/analyticName.vue';
@@ -185,7 +151,6 @@ import IODependenciesVue from './components/analyticSteps/IODependencies.vue';
 import configurationVue from './components/analyticSteps/configuration.vue';
 import summaryVue from './components/analyticSteps/summary.vue';
 
-
 export default {
   name: 'createAnalyticDialog',
   props: ['onFinised'],
@@ -197,11 +162,10 @@ export default {
     'algorithm-configuration': algorithmConfiguration,
     'result-configuration': resultConfiguration,
     'io-dependencies': IODependenciesVue,
-    'configuration': configurationVue,
+    configuration: configurationVue,
     'summary-analytic': summaryVue,
   },
   data() {
-
     this.STEPPERS_DATA = {
       analytic: 'first',
       followedEntity: 'second',
@@ -209,8 +173,8 @@ export default {
       triggerConfiguration: 'fourth',
       algorithmConfiguration: 'fifth',
       resultConfiguration: 'sixth',
-      IODependencies : 'seventh',
-      summary : 'eighth',
+      IODependencies: 'seventh',
+      summary: 'eighth',
     };
 
     return {
@@ -219,42 +183,41 @@ export default {
 
       // Analytic attributes data
       analyticName: '',
-      analyticDescription:'',
-      analyticShouldTriggerAtStart : false,
-      analyticShouldCatchUpPastExecutions : false,
-      analyticStatus : false,
-
+      analyticDescription: '',
+      analyticShouldTriggerAtStart: false,
+      analyticShouldCatchUpPastExecutions: false,
+      analyticAggregateExecution : '',
+      analyticStatus: false,
 
       // Inputs -> Followed Entity -> attribute data
-      followedEntity: undefined, 
+      followedEntity: undefined,
 
       // Inputs  -> Tracking Method -> attribute data
-      inputs: { },
-
+      inputs: {},
 
       // Config -> trigger attribute data
-      triggers: { },
+      triggers: {},
 
       // Config -> Algorithms attribute data
       algorithms: {},
 
       // Config -> I/O Dependencies attribute data
-      ioDependencies : { R : ""},
+      ioDependencies: { R: '' },
 
       // Config -> Result attribute data
-      resultType : '',
-      resultName : '',
-      shouldCreateEndpointIfNotExist : false,
-      endpointCreationUnit : '',
-      endpointCreationMaxDays : null,
+      resultType: '',
+      resultName: '',
+      shouldCreateEndpointIfNotExist: false,
+      endpointCreationUnit: '',
+      endpointCreationMaxDays: null,
       ticketContextId: '',
       ticketProcessId: '',
-      phoneNumber:'',
-      phoneMessage:'',
+      phoneNumber: '',
+      phoneMessage: '',
       alarmPriority: null,
-      gChatMessage : '',
-      gChatSpaceName : '',
-      
+      gChatMessage: '',
+      gChatSpaceName: '',
+
       selectedNode: undefined,
       entityType: undefined,
 
@@ -273,7 +236,7 @@ export default {
   },
 
   created() {
-    this.ANALYTIC_STATUS = ANALYTIC_STATUS;
+    this.ANALYTIC_STATUS = CONSTANTS.ANALYTIC_STATUS;
   },
 
   methods: {
@@ -284,7 +247,6 @@ export default {
 
     async removed(res) {
       if (res.closeResult) {
-
         // there must be a better way to get the context id...
         const contextId = Object.keys(this.selectedNode.contextIds.get())[0];
 
@@ -294,7 +256,7 @@ export default {
           description: '',
         };
 
-        const analyticInfo = await spinalAnalyticService.addAnalytic(
+        const analyticInfo = await spinalAnalyticNodeManagerService.addAnalytic(
           IAnalytic,
           contextId,
           this.selectedNode.id.get()
@@ -303,89 +265,87 @@ export default {
         //create trackingMethod Node
         const trackingMethodAttributes = this.getTrackingMethodAttributes();
         console.log('trackingMethodAttributes :', trackingMethodAttributes);
-        
+
         const trackingMethodInfo =
-          await spinalAnalyticService.addInputTrackingMethod(
+          await spinalAnalyticNodeManagerService.addInputTrackingMethod(
             trackingMethodAttributes,
             contextId,
             analyticInfo.id.get()
           );
 
-
-
         //create followedEntity Node
 
         const followedEntityInfo =
-          await spinalAnalyticService.addInputLinkToFollowedEntity(
+          await spinalAnalyticNodeManagerService.addInputLinkToFollowedEntity(
             contextId,
             analyticInfo.id.get(),
             this.followedEntity
-        );
-
+          );
 
         //create config Node
         const configAttributes = {};
 
-
         //Add all analytic parameters ( description, status, triggerAtStart)
         const analyticAttributes = this.getAnalyticAttributes();
-        configAttributes[
-          CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS
-        ] = analyticAttributes;
-
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_ANALYTIC_PARAMETERS] =
+          analyticAttributes;
 
         const triggerAttributes = this.getTriggerAttributes();
-        configAttributes[
-          CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS
-        ] = triggerAttributes;
-
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_TRIGGER_PARAMETERS] =
+          triggerAttributes;
 
         const resultAttributes = this.getResultAttributes();
-        configAttributes[CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] = resultAttributes;
-        
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_RESULT_PARAMETERS] =
+          resultAttributes;
 
-
-        const algorithmParametersAttributes = this.getAlgorithmParametersAttributes();
-        configAttributes[CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS] =
+        const algorithmParametersAttributes =
+          this.getAlgorithmParametersAttributes();
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_ALGORTHM_PARAMETERS] =
           algorithmParametersAttributes;
-        
+
         const algorithmMappingAttributes = this.getAlgorithmMappingAttributes();
-        configAttributes[CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING] = algorithmMappingAttributes;
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_ALGORITHM_INDEX_MAPPING] =
+          algorithmMappingAttributes;
 
         const ioAttributes = this.getIOAttributes();
-        configAttributes[CATEGORY_ATTRIBUTE_IO_DEPENDENCIES] = ioAttributes;
-        
+        configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_IO_DEPENDENCIES] = ioAttributes;
+
         if (this.ticketContextId && this.ticketProcessId) {
           const ticketAttributes = this.getTicketAttributes();
-          configAttributes[
-            CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS
-          ] = ticketAttributes;
+          configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_TICKET_LOCALIZATION_PARAMETERS] =
+            ticketAttributes;
         }
 
-        if(this.resultType == ANALYTIC_RESULT_TYPE.SMS){
+        if (this.resultType == CONSTANTS.ANALYTIC_RESULT_TYPE.SMS) {
           const smsAttributes = this.getSMSAttributes();
-          configAttributes[
-            CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS
-          ] = smsAttributes;
-        };
+          configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_TWILIO_PARAMETERS] =
+            smsAttributes;
+        }
 
-        if([ANALYTIC_RESULT_TYPE.GCHAT_MESSAGE,ANALYTIC_RESULT_TYPE.GCHAT_ORGAN_CARD].includes(this.resultType)){
+        if (
+          [
+          CONSTANTS.ANALYTIC_RESULT_TYPE.GCHAT_MESSAGE,
+          CONSTANTS.ANALYTIC_RESULT_TYPE.GCHAT_ORGAN_CARD,
+          ].includes(this.resultType)
+        ) {
           const gChatAttributes = this.getGChatAttributes();
-          configAttributes[
-            CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS
-          ] = gChatAttributes;
-        };
+          configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_GCHAT_PARAMETERS] =
+            gChatAttributes;
+        }
 
-        if(this.resultType == ANALYTIC_RESULT_TYPE.ENDPOINT && this.shouldCreateEndpointIfNotExist){
-          const endpointCreationAttributes = this.getEndpointCreationAttributes();
-          configAttributes[
-            CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS
-          ] = endpointCreationAttributes;
-        };
-        
+        if (
+          this.resultType == CONSTANTS.ANALYTIC_RESULT_TYPE.ENDPOINT &&
+          this.shouldCreateEndpointIfNotExist
+        ) {
+          const endpointCreationAttributes =
+            this.getEndpointCreationAttributes();
+          configAttributes[CONSTANTS.CATEGORY_ATTRIBUTE_ENDPOINT_PARAMETERS] =
+            endpointCreationAttributes;
+        }
+
         console.log('configAttributes :', configAttributes);
 
-        const configInfo = await spinalAnalyticService.addConfig(
+        const configInfo = await spinalAnalyticNodeManagerService.addConfig(
           configAttributes,
           analyticInfo.id.get(),
           contextId
@@ -407,7 +367,19 @@ export default {
     addInput() {
       let length = Object.keys(this.inputs).length;
       console.log('adding input');
-      this.inputs = { ...this.inputs, [`I${length}`]: { trackingMethod: '', filterValue: '', searchDepth:0, strictDepth:false, searchRelations:'', timeseriesIntervalTime : 0 , timeseriesValueAtStart : false }};
+      this.inputs = {
+        ...this.inputs,
+        [`I${length}`]: {
+          trackingMethod: '',
+          filterValue: '',
+          searchDepth: 0,
+          strictDepth: false,
+          searchRelations: '',
+          timeseriesIntervalTime: 0,
+          timeseriesValueAtStart: false,
+          captureAllModels: false,
+        },
+      };
     },
 
     removeInput(inputName) {
@@ -423,14 +395,20 @@ export default {
       delete this.inputs[`I${i}`];
 
       this.inputs = { ...this.inputs };
-      console.log("deleted input : ", inputName);
+      console.log('deleted input : ', inputName);
     },
 
     addTrigger() {
       let length = Object.keys(this.triggers).length;
       console.log('adding input');
-      this.triggers = { ...this.triggers, [`T${length}`]: { triggerType: '', triggerValue: '', changeOfValueThreshold : 0 }};
-      
+      this.triggers = {
+        ...this.triggers,
+        [`T${length}`]: {
+          triggerType: '',
+          triggerValue: '',
+          changeOfValueThreshold: 0,
+        },
+      };
     },
 
     removeTrigger(triggerName) {
@@ -446,16 +424,19 @@ export default {
       delete this.triggers[`T${i}`];
 
       this.triggers = { ...this.triggers };
-      console.log("deleted trigger : ", triggerName);
+      console.log('deleted trigger : ', triggerName);
     },
 
-    addAlgorithm(){
+    addAlgorithm() {
       let length = Object.keys(this.algorithms).length;
       console.log('adding algorithm');
-      this.algorithms = { ...this.algorithms, [`A${length}`]: { name :'', params: []}};
+      this.algorithms = {
+        ...this.algorithms,
+        [`A${length}`]: { name: '', params: [] },
+      };
     },
 
-    removeAlgorithm(algorithmIndexName){
+    removeAlgorithm(algorithmIndexName) {
       delete this.algorithms[algorithmIndexName];
       let index = Number(algorithmIndexName.match(/(\d+)/)[0]);
       // shift back all the elements after the deleted one.
@@ -468,7 +449,7 @@ export default {
       delete this.algorithms[`A${i}`];
 
       this.algorithms = { ...this.algorithms };
-      console.log("deleted algorithm : ", algorithmIndexName);
+      console.log('deleted algorithm : ', algorithmIndexName);
     },
 
     changeStep(stepId) {
@@ -523,87 +504,112 @@ export default {
       );
     },
 
-    getTrackingMethodAttributes(){
+    getTrackingMethodAttributes() {
       const trackingMethodAttributes = {};
-      for ( const inputKey of Object.keys(this.inputs))
-      {
-        trackingMethodAttributes[inputKey] = []
-        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TRACKING_METHOD}`,
-                  type: 'string',
-                  value: this.inputs[inputKey].trackingMethod });
-        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_FILTER_VALUE}`,
-                  type: 'string',
-                  value: this.inputs[inputKey].filterValue });
-        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_DEPTH}`,
-                  type: 'number',
-                  value: this.inputs[inputKey].searchDepth });
-        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_STRICT_DEPTH}`,
-                  type: 'boolean',
-                  value: this.inputs[inputKey].strictDepth });
-        trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_SEARCH_RELATIONS}`,
-                  type: 'string',
-                  value: this.inputs[inputKey].searchRelations });
-        
-        if([TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER,TRACK_METHOD.ENDPOINT_NAME_FILTER].includes(this.inputs[inputKey].trackingMethod) ){
-          trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES}`,
-                  type: 'number',
-                  value: this.inputs[inputKey].timeseriesIntervalTime });
-          trackingMethodAttributes[inputKey].push({ name: `${ATTRIBUTE_TIMESERIES_VALUE_AT_START}`,
-                  type: 'boolean',
-                  value: this.inputs[inputKey].timeseriesValueAtStart });
-          
-          
+      for (const inputKey of Object.keys(this.inputs)) {
+        trackingMethodAttributes[inputKey] = [];
+        trackingMethodAttributes[inputKey].push({
+          name: `${CONSTANTS.ATTRIBUTE_TRACKING_METHOD}`,
+          type: 'string',
+          value: this.inputs[inputKey].trackingMethod,
+        });
+        trackingMethodAttributes[inputKey].push({
+          name: `${CONSTANTS.ATTRIBUTE_FILTER_VALUE}`,
+          type: 'string',
+          value: this.inputs[inputKey].filterValue,
+        });
+        trackingMethodAttributes[inputKey].push({
+          name: `${CONSTANTS.ATTRIBUTE_SEARCH_DEPTH}`,
+          type: 'number',
+          value: this.inputs[inputKey].searchDepth,
+        });
+        trackingMethodAttributes[inputKey].push({
+          name: `${CONSTANTS.ATTRIBUTE_STRICT_DEPTH}`,
+          type: 'boolean',
+          value: this.inputs[inputKey].strictDepth,
+        });
+        trackingMethodAttributes[inputKey].push({
+          name: `${CONSTANTS.ATTRIBUTE_SEARCH_RELATIONS}`,
+          type: 'string',
+          value: this.inputs[inputKey].searchRelations,
+        });
+
+        if (
+          [
+          CONSTANTS.TRACK_METHOD.CONTROL_ENDPOINT_NAME_FILTER,
+          CONSTANTS.TRACK_METHOD.ENDPOINT_NAME_FILTER,
+          ].includes(this.inputs[inputKey].trackingMethod)
+        ) {
+          trackingMethodAttributes[inputKey].push({
+            name: `${CONSTANTS.ATTRIBUTE_TIMESERIES}`,
+            type: 'number',
+            value: this.inputs[inputKey].timeseriesIntervalTime,
+          });
+          trackingMethodAttributes[inputKey].push({
+            name: `${CONSTANTS.ATTRIBUTE_TIMESERIES_VALUE_AT_START}`,
+            type: 'boolean',
+            value: this.inputs[inputKey].timeseriesValueAtStart,
+          });
+          trackingMethodAttributes[inputKey].push({
+            name: `${CONSTANTS.ATTRIBUTE_MULTIPLE_MODELS}`,
+            type: 'boolean',
+            value: this.inputs[inputKey].captureAllModels,
+          });
         }
-        
       }
       return trackingMethodAttributes;
     },
 
-    getAnalyticAttributes(){
+    getAnalyticAttributes() {
       const analyticAttributes = [];
       analyticAttributes.push({
-        name: `${ATTRIBUTE_ANALYTIC_DESCRIPTION}`,
+        name: `${CONSTANTS.ATTRIBUTE_ANALYTIC_DESCRIPTION}`,
         type: 'string',
         value: this.analyticDescription,
       });
       analyticAttributes.push({
-        name: `${ATTRIBUTE_ANALYTIC_STATUS}`,
+        name: `${CONSTANTS.ATTRIBUTE_ANALYTIC_STATUS}`,
         type: 'string',
-        value: this.analyticStatus? ANALYTIC_STATUS.ACTIVE : ANALYTIC_STATUS.INACTIVE,
+        value: this.analyticStatus
+          ? CONSTANTS.ANALYTIC_STATUS.ACTIVE
+          : CONSTANTS.ANALYTIC_STATUS.INACTIVE,
       });
       analyticAttributes.push({
-        name: `${ATTRIBUTE_TRIGGER_AT_START}`,
+        name: `${CONSTANTS.ATTRIBUTE_TRIGGER_AT_START}`,
         type: 'boolean',
         value: this.analyticShouldTriggerAtStart,
       });
+      if(this.analyticAggregateExecution){
+        analyticAttributes.push({
+          name: `${CONSTANTS.ATTRIBUTE_AGGREGATE_EXECUTION_TIME}`,
+          type: 'string',
+          value: this.analyticAggregateExecution,
+        });
+      }
+      const tmp = Date.now();
       analyticAttributes.push({
-        name: `${ATTRIBUTE_ANALYTIC_PAST_EXECUTIONS}`,
-        type: 'boolean',
-        value: this.analyticShouldCatchUpPastExecutions,
-      });
-      analyticAttributes.push({
-        name: `${ATTRIBUTE_LAST_EXECUTION_TIME}`,
-        type: 'string',
-        value: Date.now(),
+        name: `${CONSTANTS.ATTRIBUTE_LAST_EXECUTION_TIME}`,
+        type: 'number',
+        value: tmp,
       });
       return analyticAttributes;
     },
 
-    getResultAttributes(){
+    getResultAttributes() {
       const resultAttributes = [];
       resultAttributes.push({
-        name: `${ATTRIBUTE_RESULT_TYPE}`,
+        name: `${CONSTANTS.ATTRIBUTE_RESULT_TYPE}`,
         type: 'string',
         value: this.resultType,
       });
       resultAttributes.push({
-        name: `${ATTRIBUTE_RESULT_NAME}`,
+        name: `${CONSTANTS.ATTRIBUTE_RESULT_NAME}`,
         type: 'string',
         value: this.resultName,
       });
-      if(this.resultType === ANALYTIC_RESULT_TYPE.ENDPOINT){
+      if (this.resultType === CONSTANTS.ANALYTIC_RESULT_TYPE.ENDPOINT) {
         resultAttributes.push({
-          name: `${ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST}`,
+          name: `${CONSTANTS.ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST}`,
           type: 'boolean',
           value: this.shouldCreateEndpointIfNotExist,
         });
@@ -611,15 +617,22 @@ export default {
       return resultAttributes;
     },
 
-    getAlgorithmParametersAttributes(){
+    getAlgorithmParametersAttributes() {
       const algorithmParametersAttributes = [];
       for (const algorithmIndexName of Object.keys(this.algorithms)) {
         let algoName = this.algorithms[algorithmIndexName].name;
         const doc = ALGORITHMS[algoName].requiredParams;
-        for(let i = 0 ; i<this.algorithms[algorithmIndexName].params.length; i++){
+        for (
+          let i = 0;
+          i < this.algorithms[algorithmIndexName].params.length;
+          i++
+        ) {
           algorithmParametersAttributes.push({
-            name: `${algorithmIndexName}${ATTRIBUTE_SEPARATOR}${doc[i].name}`,
-            value: doc[i].type === 'number' ? + this.algorithms[algorithmIndexName].params[i] : this.algorithms[algorithmIndexName].params[i],
+            name: `${algorithmIndexName}${CONSTANTS.ATTRIBUTE_SEPARATOR}${doc[i].name}`,
+            value:
+              doc[i].type === 'number'
+                ? +this.algorithms[algorithmIndexName].params[i]
+                : this.algorithms[algorithmIndexName].params[i],
             type: doc[i].type,
           });
         }
@@ -627,7 +640,7 @@ export default {
       return algorithmParametersAttributes;
     },
 
-    getAlgorithmMappingAttributes(){
+    getAlgorithmMappingAttributes() {
       const algorithmMappingAttributes = [];
       for (const algorithmIndexName of Object.keys(this.algorithms)) {
         algorithmMappingAttributes.push({
@@ -639,80 +652,79 @@ export default {
       return algorithmMappingAttributes;
     },
 
-    getTicketAttributes(){
+    getTicketAttributes() {
       const ticketAttributes = [];
       ticketAttributes.push({
-        name: `${ATTRIBUTE_TICKET_CONTEXT_ID}`,
+        name: `${CONSTANTS.ATTRIBUTE_TICKET_CONTEXT_ID}`,
         type: 'string',
         value: this.ticketContextId,
       });
       ticketAttributes.push({
-        name: `${ATTRIBUTE_TICKET_PROCESS_ID}`,
+        name: `${CONSTANTS.ATTRIBUTE_TICKET_PROCESS_ID}`,
         type: 'string',
         value: this.ticketProcessId,
       });
-      if(this.alarmPriority){
-          ticketAttributes.push({
-            name: `${ATTRIBUTE_ALARM_PRIORITY}`,
-            value: this.alarmPriority,
-            type: 'number',
-          });
-        }
+      if (this.alarmPriority) {
+        ticketAttributes.push({
+          name: `${CONSTANTS.ATTRIBUTE_ALARM_PRIORITY}`,
+          value: this.alarmPriority,
+          type: 'number',
+        });
+      }
       return ticketAttributes;
     },
 
-    getEndpointCreationAttributes(){
+    getEndpointCreationAttributes() {
       const endpointCreationAttributes = [];
       endpointCreationAttributes.push({
-        name: `${ATTRIBUTE_CREATE_ENDPOINT_UNIT}`,
+        name: `${CONSTANTS.ATTRIBUTE_CREATE_ENDPOINT_UNIT}`,
         type: 'string',
         value: this.endpointCreationUnit,
       });
       endpointCreationAttributes.push({
-        name: `${ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS}`,
+        name: `${CONSTANTS.ATTRIBUTE_CREATE_ENDPOINT_MAX_DAYS}`,
         type: 'number',
         value: this.endpointCreationMaxDays,
       });
       return endpointCreationAttributes;
     },
 
-    getSMSAttributes(){
+    getSMSAttributes() {
       const smsAttributes = [];
       smsAttributes.push({
-        name: `${ATTRIBUTE_PHONE_NUMBER}`,
+        name: `${CONSTANTS.ATTRIBUTE_PHONE_NUMBER}`,
         type: 'string',
         value: this.phoneNumber,
       });
       smsAttributes.push({
-        name: `${ATTRIBUTE_PHONE_MESSAGE}`,
+        name: `${CONSTANTS.ATTRIBUTE_PHONE_MESSAGE}`,
         type: 'string',
         value: this.phoneMessage,
       });
       return smsAttributes;
     },
 
-    getGChatAttributes(){
+    getGChatAttributes() {
       const gChatAttributes = [];
       gChatAttributes.push({
-        name: `${ATTRIBUTE_GCHAT_MESSAGE}`,
+        name: `${CONSTANTS.ATTRIBUTE_GCHAT_MESSAGE}`,
         type: 'string',
         value: this.gChatMessage,
       });
       gChatAttributes.push({
-        name: `${ATTRIBUTE_GCHAT_SPACE}`,
+        name: `${CONSTANTS.ATTRIBUTE_GCHAT_SPACE}`,
         type: 'string',
         value: this.gChatSpaceName,
       });
       return gChatAttributes;
     },
-    
 
-    getIOAttributes(){
+    getIOAttributes() {
       const ioAttributes = [];
       for (const ioDependencyName of Object.keys(this.ioDependencies)) {
-        let str = "";
+        let str = '';
         for (const ioDependency of this.ioDependencies[ioDependencyName]) {
-          str += `${ioDependency}${ATTRIBUTE_VALUE_SEPARATOR}`;
+          str += `${ioDependency}${CONSTANTS.ATTRIBUTE_VALUE_SEPARATOR}`;
         }
         str = str.slice(0, -1);
         ioAttributes.push({
@@ -724,12 +736,12 @@ export default {
       return ioAttributes;
     },
 
-    getTriggerAttributes(){
+    getTriggerAttributes() {
       const triggerAttributes = [];
       for (const triggerIndex of Object.keys(this.triggers)) {
-        let str = `${this.triggers[triggerIndex].triggerType}${ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].triggerValue}`;
+        let str = `${this.triggers[triggerIndex].triggerType}${CONSTANTS.ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].triggerValue}`;
         if (this.triggers[triggerIndex].changeOfValueThreshold !== null) {
-          str += `${ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].changeOfValueThreshold}`;
+          str += `${CONSTANTS.ATTRIBUTE_VALUE_SEPARATOR}${this.triggers[triggerIndex].changeOfValueThreshold}`;
         }
         triggerAttributes.push({
           name: `${triggerIndex}`,
@@ -739,7 +751,6 @@ export default {
       }
       return triggerAttributes;
     },
-    
   },
 };
 </script>
@@ -755,9 +766,9 @@ export default {
   text-align: center;
 }
 .md-button {
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+  padding: 10px 20px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
 }
 .mdDialog .mdDialogContainer {
   width: 1200px;
