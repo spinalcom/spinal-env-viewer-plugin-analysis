@@ -281,6 +281,8 @@ export default {
           timeseriesIntervalTime: parseInputs[inputKey][CONSTANTS.ATTRIBUTE_TIMESERIES],
           timeseriesValueAtStart:
             parseInputs[inputKey][CONSTANTS.ATTRIBUTE_TIMESERIES_VALUE_AT_START],
+          captureAllModels:
+            parseInputs[inputKey][CONSTANTS.ATTRIBUTE_MULTIPLE_MODELS] || false,
         };
       }
 
