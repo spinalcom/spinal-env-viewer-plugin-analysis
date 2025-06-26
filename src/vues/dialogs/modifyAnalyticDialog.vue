@@ -74,6 +74,7 @@
           v-bind:shouldCreateEndpointIfNotExist.sync="
             shouldCreateEndpointIfNotExist
           "
+          v-bind:endpointModifyAttrInstead.sync="endpointModifyAttrInstead"
           v-bind:endpointCreationUnit.sync="endpointCreationUnit"
           v-bind:endpointCreationMaxDays.sync="endpointCreationMaxDays"
           v-bind:ticketContextId.sync="ticketContextId"
@@ -223,6 +224,7 @@ export default {
       shouldCreateEndpointIfNotExist: false,
       endpointCreationUnit: '',
       endpointCreationMaxDays: null,
+      endpointModifyAttrInstead: '',
       ticketContextId: '',
       ticketProcessId: '',
       phoneNumber: '',
@@ -365,6 +367,10 @@ export default {
         );
       this.resultType = resultAttributes[CONSTANTS.ATTRIBUTE_RESULT_TYPE];
       this.resultName = resultAttributes[CONSTANTS.ATTRIBUTE_RESULT_NAME];
+
+      this.endpointModifyAttrInstead =
+        resultAttributes[CONSTANTS.ATTRIBUTE_MODIFY_ATTR_INSTEAD];
+      
       this.shouldCreateEndpointIfNotExist =
         resultAttributes[CONSTANTS.ATTRIBUTE_CREATE_ENDPOINT_IF_NOT_EXIST];
 
@@ -822,6 +828,11 @@ export default {
         name: `${CONSTANTS.ATTRIBUTE_RESULT_NAME}`,
         type: 'string',
         value: this.resultName,
+      });
+      resultAttributes.push({
+        name: `${CONSTANTS.ATTRIBUTE_MODIFY_ATTR_INSTEAD}`,
+        type: 'string',
+        value: this.endpointModifyAttrInstead,
       });
       if (this.resultType === CONSTANTS.ANALYTIC_RESULT_TYPE.ENDPOINT) {
         resultAttributes.push({

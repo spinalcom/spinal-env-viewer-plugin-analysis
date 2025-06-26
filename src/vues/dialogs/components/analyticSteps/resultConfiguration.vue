@@ -40,36 +40,46 @@
         all.
       </p>
 
+      <div v-if="requireEndpointModifyAttrInstead">
+        <md-field class="fixed-size-field">
+        <label> Modify attribute instead of current value ? ( Enter attribute name or leave empty for default behavior ) </label>
+        <md-input
+          @change="update('endpointModifyAttrInstead', localEndpointModifyAttrInstead)"
+          v-model="localEndpointModifyAttrInstead"
+        ></md-input>
+        </md-field>
+      </div>
+
       <div v-if="requireEndpointCreationInformation">
-      <md-switch
-        @change="
-          update(
-            'shouldCreateEndpointIfNotExist',
-            localShouldCreateEndpointIfNotExist
-          )
-        "
-        v-model="localShouldCreateEndpointIfNotExist"
-      >Should create endpoint if not exist : <b>{{ localShouldCreateEndpointIfNotExist ? 'Yes': 'No'}} </b></md-switch>
-       <div v-if="shouldCreateEndpointIfNotExist == true">
-        <md-field class="fixed-size-field">
-          <label>Endpoint unit</label>
-            <md-input
-              @change="
-                update('endpointCreationUnit', localEndpointCreationUnit)
-              "
-              v-model="localEndpointCreationUnit"
-            ></md-input>
-        </md-field>
-        <md-field class="fixed-size-field">
-          <label>Timeseries storage max days</label>
-            <md-input type="number"
-              @change="
-                update('endpointCreationMaxDays', localEndpointCreationMaxDays)
-              "
-              v-model="localEndpointCreationMaxDays"
-            ></md-input>
-        </md-field>
-          </div>
+        <md-switch
+          @change="
+            update(
+              'shouldCreateEndpointIfNotExist',
+              localShouldCreateEndpointIfNotExist
+            )
+          "
+          v-model="localShouldCreateEndpointIfNotExist"
+        >Should create endpoint if not exist : <b>{{ localShouldCreateEndpointIfNotExist ? 'Yes': 'No'}} </b></md-switch>
+        <div v-if="shouldCreateEndpointIfNotExist == true">
+          <md-field class="fixed-size-field">
+            <label>Endpoint unit</label>
+              <md-input
+                @change="
+                  update('endpointCreationUnit', localEndpointCreationUnit)
+                "
+                v-model="localEndpointCreationUnit"
+              ></md-input>
+          </md-field>
+          <md-field class="fixed-size-field">
+            <label>Timeseries storage max days</label>
+              <md-input type="number"
+                @change="
+                  update('endpointCreationMaxDays', localEndpointCreationMaxDays)
+                "
+                v-model="localEndpointCreationMaxDays"
+              ></md-input>
+          </md-field>
+            </div>
       </div>
 
       <div v-if="requireTicketLocalization">
@@ -164,6 +174,7 @@ export default {
     'shouldCreateEndpointIfNotExist',
     'endpointCreationUnit',
     'endpointCreationMaxDays',
+    'endpointModifyAttrInstead',
     'ticketContextId',
     'ticketProcessId',
     'alarmPriority',
@@ -187,6 +198,7 @@ export default {
       localPhoneMessage: this.phoneMessage,
       localGChatMessage: this.gChatMessage,
       localGChatSpaceName: this.gChatSpaceName,
+      localEndpointModifyAttrInstead: this.endpointModifyAttrInstead, 
       ticketProcesses: [],
     };
   },
@@ -238,6 +250,10 @@ export default {
     requireEndpointCreationInformation() {
       return this.localResultType == this.CONST_ANALYTIC_RESULT_TYPE.ENDPOINT;
     },
+
+    requireEndpointModifyAttrInstead() {
+      return [this.CONST_ANALYTIC_RESULT_TYPE.ENDPOINT, this.CONST_ANALYTIC_RESULT_TYPE.CONTROL_ENDPOINT].includes(this.localResultType);
+    },
   },
 
   watch: {
@@ -277,6 +293,9 @@ export default {
     },
     endpointCreationMaxDays() {
       this.localEndpointCreationMaxDays = this.endpointCreationMaxDays;
+    },
+    endpointModifyAttrInstead() {
+      this.localEndpointModifyAttrInstead = this.endpointModifyAttrInstead;
     },
   },
 };
