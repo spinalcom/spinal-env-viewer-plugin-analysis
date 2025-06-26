@@ -85,6 +85,8 @@
           v-bind:gChatMessage.sync="gChatMessage"
           v-bind:gChatSpaceName.sync="gChatSpaceName"
           v-bind:alarmPriority.sync="alarmPriority"
+          v-bind:resultCategoryName.sync="resultCategoryName"
+          v-bind:resultCreateAttributeIfNotExist.sync="resultCreateAttributeIfNotExist"
         >
         </result-configuration>
 
@@ -212,6 +214,7 @@ export default {
       endpointCreationUnit: '',
       endpointCreationMaxDays: null,
       endpointModifyAttrInstead: '',
+
       ticketContextId: '',
       ticketProcessId: '',
       phoneNumber: '',
@@ -219,6 +222,9 @@ export default {
       alarmPriority: null,
       gChatMessage: '',
       gChatSpaceName: '',
+
+      resultCategoryName: '',
+      resultCreateAttributeIfNotExist: false,
 
       selectedNode: undefined,
       entityType: undefined,
@@ -604,6 +610,7 @@ export default {
         type: 'string',
         value: this.resultType,
       });
+      
       resultAttributes.push({
         name: `${CONSTANTS.ATTRIBUTE_RESULT_NAME}`,
         type: 'string',
@@ -614,8 +621,18 @@ export default {
         type: 'string',
         value: this.endpointModifyAttrInstead,
       })
-
-      
+      if( this.resultType === CONSTANTS.ANALYTIC_RESULT_TYPE.ATTRIBUTE_CREATE_OR_MOD){
+        resultAttributes.push({
+          name: `${CONSTANTS.ATTRIBUTE_RESULT_CATEGORY_NAME}`,
+          type: 'string',
+          value: this.resultCategoryName,
+        });
+        resultAttributes.push({
+          name: `${CONSTANTS.ATTRIBUTE_RESULT_CREATE_ATTRIBUTE_IF_NOT_EXIST}`,
+          type: 'boolean',
+          value: this.resultCreateAttributeIfNotExist,
+        });
+      }
 
       if (this.resultType === CONSTANTS.ANALYTIC_RESULT_TYPE.ENDPOINT) {
         resultAttributes.push({

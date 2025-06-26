@@ -156,6 +156,25 @@
           ></md-input>
         </md-field>
       </div>
+
+      <div v-if="requireAttributeInformation">
+        <md-field class="fixed-size-field">
+          <label>Result category name</label>
+          <md-input
+            @change="update('resultCategoryName', localResultCategoryName)"
+            v-model="localResultCategoryName"
+          ></md-input>
+        </md-field>
+        <md-switch
+          @change="
+            update(
+              'resultCreateAttributeIfNotExist',
+              localResultCreateAttributeIfNotExist
+            )
+          "
+          v-model="localResultCreateAttributeIfNotExist"
+        >Create attribute if not exist : <b>{{ localResultCreateAttributeIfNotExist ? 'Yes': 'No'}} </b></md-switch>
+      </div>
     </md-content>
   </md-step>
 </template>
@@ -182,6 +201,8 @@ export default {
     'phoneMessage',
     'gChatMessage',
     'gChatSpaceName',
+    'resultCategoryName',
+    'resultCreateAttributeIfNotExist'
   ],
   components: {},
   data() {
@@ -199,6 +220,8 @@ export default {
       localGChatMessage: this.gChatMessage,
       localGChatSpaceName: this.gChatSpaceName,
       localEndpointModifyAttrInstead: this.endpointModifyAttrInstead, 
+      localResultCategoryName: this.resultCategoryName,
+      localResultCreateAttributeIfNotExist: this.resultCreateAttributeIfNotExist,
       ticketProcesses: [],
     };
   },
@@ -254,6 +277,10 @@ export default {
     requireEndpointModifyAttrInstead() {
       return [this.CONST_ANALYTIC_RESULT_TYPE.ENDPOINT, this.CONST_ANALYTIC_RESULT_TYPE.CONTROL_ENDPOINT].includes(this.localResultType);
     },
+
+    requireAttributeInformation(){
+      return this.localResultType === this.CONST_ANALYTIC_RESULT_TYPE.ATTRIBUTE_CREATE_OR_MOD;
+    }
   },
 
   watch: {
@@ -296,6 +323,12 @@ export default {
     },
     endpointModifyAttrInstead() {
       this.localEndpointModifyAttrInstead = this.endpointModifyAttrInstead;
+    },
+    resultCategoryName() {
+      this.localResultCategoryName = this.resultCategoryName;
+    },
+    resultCreateAttributeIfNotExist() {
+      this.localResultCreateAttributeIfNotExist = this.resultCreateAttributeIfNotExist;
     },
   },
 };
